@@ -1,25 +1,28 @@
-import logo from './logo.svg';
-import './App.css';
+// project import
+import Routes from './routes';
+import ThemeCustomization from './themes';
+import ScrollTop from './components/ScrollTop';
+import Snackbar from './components/@extended/Snackbar';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+// auth provider
+import { FirebaseProvider as AuthProvider } from './contexts/FirebaseContext';
+// import { AWSCognitoProvider as AuthProvider } from 'contexts/AWSCognitoContext';
+// import { JWTProvider as AuthProvider } from 'contexts/JWTContext';
+// import { Auth0Provider as AuthProvider } from 'contexts/Auth0Context';
+
+// ==============================|| APP - THEME, ROUTER, LOCAL  ||============================== //
+
+const App = () => (
+  <ThemeCustomization>
+    <ScrollTop>
+      <AuthProvider>
+        <>
+          <Routes />
+          <Snackbar />
+        </>
+      </AuthProvider>
+    </ScrollTop>
+  </ThemeCustomization>
+);
 
 export default App;

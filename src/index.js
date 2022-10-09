@@ -1,14 +1,41 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
+import ReactDOM from 'react-dom';
+import { BrowserRouter } from 'react-router-dom';
+
+// third-party
+import { Provider as ReduxProvider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+
+// scroll bar
+import 'simplebar/src/simplebar.css';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
+
+// apex-chart
+import './assets/third-party/apex-chart.css';
+import './assets/third-party/react-table.css';
+
+// load mock apis
+import './_api';
+
+// project import
 import App from './App';
+import { store, persister } from './store';
+import { ConfigProvider } from './contexts/ConfigContext';
 import reportWebVitals from './reportWebVitals';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+// ==============================|| MAIN - REACT DOM RENDER  ||============================== //
+
+ReactDOM.render(
+  <ReduxProvider store={store}>
+    <PersistGate loading={null} persistor={persister}>
+      <ConfigProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ConfigProvider>
+    </PersistGate>
+  </ReduxProvider>,
+  document.getElementById('root')
 );
 
 // If you want to start measuring performance in your app, pass a function
