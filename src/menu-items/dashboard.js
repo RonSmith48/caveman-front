@@ -19,7 +19,6 @@ const dashboard = {
     {
       id: 'dashboard',
       title: 'Dashboard',
-      //title: <FormattedMessage id="dashboard" />,
       type: 'item',
       icon: icons.DashboardOutlined,
       url: '/dashboard',

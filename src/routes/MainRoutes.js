@@ -18,6 +18,7 @@ const GeologyPage = Loadable(lazy(() => import('../pages/tech-services/geology')
 const MobileMaintPage = Loadable(lazy(() => import('../pages/maintenance/mobile-maint')));
 const TinderUploadPage = Loadable(lazy(() => import('../pages/uploads/tinderlite')));
 const DupeUploadPage = Loadable(lazy(() => import('../pages/uploads/dupe')));
+const SettingsPage = Loadable(lazy(() => import('../pages/settings/index')));
 
 // ==============================|| MAIN ROUTING ||============================== //
 
@@ -82,6 +83,10 @@ const MainRoutes = {
               element: <MobileMaintPage />
             }
           ]
+        },
+        {
+          path: 'settings',
+          element: <SettingsPage />
         },
         {
           path: 'uploads/',
