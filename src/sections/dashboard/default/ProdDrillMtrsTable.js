@@ -61,32 +61,72 @@ const headCells = [
     id: 'tracking_no',
     align: 'left',
     disablePadding: false,
-    label: 'Tracking No.'
+    label: 'Heading',
+    colspan: 1,
+    rowspan: 2
   },
   {
-    id: 'name',
-    align: 'left',
+    id: 'mon',
+    align: 'center',
     disablePadding: true,
-    label: 'Product Name'
+    label: 'Mon',
+    colspan: 2
   },
   {
-    id: 'fat',
-    align: 'right',
-    disablePadding: false,
-    label: 'Total Order'
+    id: 'tue',
+    align: 'center',
+    disablePadding: true,
+    label: 'Tue',
+    colspan: 2
   },
   {
-    id: 'carbs',
-    align: 'left',
-    disablePadding: false,
-
-    label: 'Status'
+    id: 'wed',
+    align: 'center',
+    disablePadding: true,
+    label: 'Wed',
+    colspan: 2
   },
   {
-    id: 'protein',
-    align: 'right',
+    id: 'thu',
+    align: 'center',
+    disablePadding: true,
+    label: 'Thu',
+    colspan: 2
+  },
+  {
+    id: 'fri',
+    align: 'center',
+    disablePadding: true,
+    label: 'Fri',
+    colspan: 2
+  },
+  {
+    id: 'sat',
+    align: 'center',
+    disablePadding: true,
+    label: 'Sat',
+    colspan: 2
+  },
+  {
+    id: 'sun',
+    align: 'center',
+    disablePadding: true,
+    label: 'Sun',
+    colspan: 2
+  },
+  {
+    id: 'totals',
+    align: 'center',
     disablePadding: false,
-    label: 'Total Amount'
+    label: 'Total',
+    rowspan: 2
+  },
+  {
+    id: 'target',
+    align: 'center',
+    disablePadding: false,
+    label: 'Target',
+    rowspan: 2
   }
 ];
 
@@ -102,10 +142,56 @@ function OrderTableHead({ order, orderBy }) {
             align={headCell.align}
             padding={headCell.disablePadding ? 'none' : 'normal'}
             sortDirection={orderBy === headCell.id ? order : false}
+            colSpan={headCell.colspan}
+            rowSpan={headCell.rowspan}
           >
             {headCell.label}
           </TableCell>
         ))}
+      </TableRow>
+      <TableRow>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          DS
+        </TableCell>
+        <TableCell align="center" padding="none">
+          NS
+        </TableCell>
       </TableRow>
     </TableHead>
   );
@@ -125,19 +211,19 @@ const OrderStatus = ({ status }) => {
   switch (status) {
     case 0:
       color = 'warning';
-      title = 'Pending';
+      title = 'At Risk';
       break;
     case 1:
       color = 'success';
-      title = 'Approved';
+      title = 'On Track';
       break;
     case 2:
       color = 'error';
-      title = 'Rejected';
+      title = 'Unlikely';
       break;
     default:
       color = 'primary';
-      title = 'None';
+      title = 'OK';
   }
 
   return (
@@ -172,6 +258,7 @@ export default function OrderTable() {
       >
         <Table
           aria-labelledby="tableTitle"
+          size="small"
           sx={{
             '& .MuiTableCell-root:first-of-type': {
               pl: 2
@@ -199,13 +286,25 @@ export default function OrderTable() {
                       {row.trackingNO}
                     </Link>
                   </TableCell>
-                  <TableCell align="left">{row.name}</TableCell>
-                  <TableCell align="right">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="center">{row.fat}</TableCell>
+                  <TableCell align="right">
+                    <NumberFormat value={row.protein} displayType="text" thousandSeparator />
+                  </TableCell>
                   <TableCell align="left">
                     <OrderStatus status={row.carbs} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <NumberFormat value={row.protein} displayType="text" thousandSeparator prefix="$" />
                   </TableCell>
                 </TableRow>
               );

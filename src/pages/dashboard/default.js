@@ -25,7 +25,7 @@ import IncomeAreaChart from '../../sections/dashboard/default/IncomeAreaChart';
 import MonthlyBarChart from '../../sections/dashboard/default/MonthlyBarChart';
 import ReportAreaChart from '../../sections/dashboard/default/ReportAreaChart';
 import SalesChart from '../../sections/dashboard/SalesChart';
-import OrdersTable from '../../sections/dashboard/default/OrdersTable';
+import OrdersTable from '../../sections/dashboard/default/ProdDrillMtrsTable';
 
 // assets
 import { GiftOutlined, MessageOutlined, SettingOutlined } from '@ant-design/icons';
@@ -151,7 +151,7 @@ const DashboardDefault = () => {
       <Grid item xs={12} md={7} lg={8}>
         <Grid container alignItems="center" justifyContent="space-between">
           <Grid item>
-            <Typography variant="h5">Recent Orders</Typography>
+            <Typography variant="h5">Production Drill Actuals</Typography>
           </Grid>
           <Grid item />
         </Grid>
