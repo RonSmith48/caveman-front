@@ -128,23 +128,34 @@ export default function TabProfile() {
                 <Grid item xs={12}>
                   <List component="nav" aria-label="main mailbox folders" sx={{ py: 0, '& .MuiListItem-root': { p: 0, py: 1 } }}>
                     <ListItem>
-                      <Typography align="right">Email:</Typography>
+                      <Typography align="right" variant="subtitle1">
+                        Email:
+                      </Typography>
+                    </ListItem>
+                    <ListItem>
                       <ListItemSecondaryAction>
                         <Typography align="right">{user?.email}</Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
                     <ListItem>
-                      <Typography align="right">Signup Date:</Typography>
+                      <Typography align="right" variant="subtitle1">
+                        Signup Date:
+                      </Typography>
+                    </ListItem>
+                    <ListItem>
                       <ListItemSecondaryAction>
                         <Typography align="right">{new Date(user?.start_date).toLocaleDateString('en-GB')}</Typography>
                       </ListItemSecondaryAction>
                     </ListItem>
-                    <br />
                     <ListItem>
-                      <Typography align="right">Last Login:</Typography>
+                      <Typography align="right" variant="subtitle1">
+                        Last Login:
+                      </Typography>
+                    </ListItem>
+                    <ListItem>
                       <ListItemSecondaryAction>
                         <Typography align="right">
-                          {new Date(user?.last_login).toLocaleDateString('en-GB')} <br />
+                          {new Date(user?.last_login).toLocaleDateString('en-GB')}{' '}
                           {new Date(user?.last_login).toLocaleTimeString('en-US', { hour12: true })}
                         </Typography>
                       </ListItemSecondaryAction>
