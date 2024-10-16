@@ -61,6 +61,7 @@ export default function Profile() {
   const router = useRouter();
   const SM_AVATAR_SIZE = 32;
   const LG_AVATAR_SIZE = 52;
+  const DEFAULT_AVATAR_BGCOLOUR = '#F5F5F5';
 
   const handleLogout = () => {
     signOut();
