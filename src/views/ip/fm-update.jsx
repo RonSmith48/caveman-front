@@ -20,6 +20,7 @@ import { WarningFilled } from '@ant-design/icons';
 // project imports
 import MainCard from 'components/MainCard';
 import SingleFileUpload from 'components/third-party/dropzone/ConceptRingDrop';
+import FMFileHeadersSettingsForm from 'sections/forms/FMFileHeadersSettingsForm';
 
 // ==============================|| PLUGINS - DROPZONE ||============================== //
 
@@ -36,14 +37,14 @@ const FMUpdatePage = () => {
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={6}>
+      <Grid item xs={12} sm={4}>
         <Typography variant="h4">Flow Model Update</Typography>
         <br />
         <MainCard>
           <SingleFileUpload />
         </MainCard>
       </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={12} sm={8}>
         <Grid>
           <Alert color="warning" variant="border" icon={<WarningFilled />}>
             <AlertTitle variant="h5">ABOUT YOUR FLOW MODEL LINK FILE</AlertTitle>
@@ -75,6 +76,9 @@ const FMUpdatePage = () => {
               <DialogContentText>What it does and how it works goes here.</DialogContentText>
             </DialogContent>
           </Dialog>
+        </Grid>
+        <Grid item sx={{ mt: 2 }}>
+          <FMFileHeadersSettingsForm />
         </Grid>
       </Grid>
     </Grid>
