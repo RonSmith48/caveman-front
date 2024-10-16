@@ -238,7 +238,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>X Coordinate :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>X :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField fullWidth id="headers-x" value={values.x} name="x" onBlur={handleBlur} onChange={handleChange} />
@@ -253,7 +253,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Y Coordinate :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Y :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField fullWidth id="headers-y" value={values.y} name="y" onBlur={handleBlur} onChange={handleChange} />
@@ -268,7 +268,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Z Coordinate :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Z :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField fullWidth id="headers-z" value={values.z} name="z" onBlur={handleBlur} onChange={handleChange} />
@@ -283,7 +283,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>FM Tonnes :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Tonnes :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField
@@ -305,7 +305,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Draw Zone :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Draw :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField
@@ -349,7 +349,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Modelled Au :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Au :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField fullWidth id="headers-au" value={values.au} name="au" onBlur={handleBlur} onChange={handleChange} />
@@ -364,7 +364,7 @@ function FMFileHeadersSettingsForm() {
                 <Grid item xs={12} sm={6} lg={4}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Modelled Cu :</InputLabel>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Cu :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
                       <TextField fullWidth id="headers-cu" value={values.cu} name="cu" onBlur={handleBlur} onChange={handleChange} />
