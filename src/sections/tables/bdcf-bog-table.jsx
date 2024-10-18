@@ -29,11 +29,13 @@ import IconButton from 'components/@extended/IconButton';
 import CSVExport from 'components/third-party/react-table/CSVExport';
 import RowEditable from 'components/third-party/react-table/RowEditable';
 import { fetcher } from 'utils/axios';
+import SvgAvatar from 'components/SvgAvatar';
 
 // assets
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
 import EditTwoTone from '@ant-design/icons/EditTwoTone';
 import SendOutlined from '@ant-design/icons/SendOutlined';
+import DeleteOutlined from '@ant-design/icon/DeleteOutlined';
 
 function EditAction({ row, table }) {
   const meta = table?.options?.meta;
@@ -151,9 +153,11 @@ function ReactTable({ columns, data, setData }) {
 
 // ==============================|| REACT TABLE - EDITABLE ROW ||============================== //
 
-export default function BDCFBogTable({ location_id, ringName }) {
+export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
   const [data, setData] = useState([]);
+  const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const SM_AVATAR_SIZE = 32;
 
   useEffect(() => {
     const fetchBoggingEntries = async () => {
@@ -161,8 +165,8 @@ export default function BDCFBogTable({ location_id, ringName }) {
       setLoading(true);
       try {
         const response = await fetcher(`/prod-actual/bdcf/bog/${location_id}`);
-        console.log(response); //=========
-        setData(response);
+        setData(response.data);
+        setStats(response.stats);
       } catch (error) {
         console.error('Error fetching active rings list:', error);
       } finally {
@@ -171,7 +175,7 @@ export default function BDCFBogTable({ location_id, ringName }) {
     };
 
     fetchBoggingEntries();
-  }, [location_id]);
+  }, [location_id, refreshKey]);
 
   // Memoize columns outside of any conditional statement
   const columns = useMemo(
@@ -208,20 +212,25 @@ export default function BDCFBogTable({ location_id, ringName }) {
       },
       {
         header: 'Contributor',
-        accessorKey: 'user',
+        accessorKey: 'contributor',
         dataType: 'text',
         cell: ({ row }) => {
-          const user = row.original.user;
-          return user ? (
-            <Tooltip title={user.full_name}>
-              <div>
-                <Image
-                  src={`/assets/images/users/${user.avatar}`}
-                  alt={user.full_name}
-                  width={30}
-                  height={30}
-                  style={{ borderRadius: '50%' }}
-                />
+          const contributor = row.original.contributor;
+          return contributor ? (
+            <Tooltip title={contributor.full_name}>
+              <div
+                style={{
+                  width: SM_AVATAR_SIZE,
+                  height: SM_AVATAR_SIZE,
+                  backgroundColor: contributor?.bg_colour,
+                  borderRadius: '50%', // Makes the background a circle
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden' // Ensures the avatar stays inside the circle
+                }}
+              >
+                <SvgAvatar src={contributor?.avatar} alt={contributor?.full_name} size={SM_AVATAR_SIZE} />
               </div>
             </Tooltip>
           ) : (
@@ -256,9 +265,60 @@ export default function BDCFBogTable({ location_id, ringName }) {
       <MainCard sx={{ mb: 2 }} content={false}>
         <CardContent>
           <Typography variant="h5">{ringName}</Typography>
-          <Typography variant="body1" sx={{ textAlign: 'right' }}>
+          {/*           <Typography variant="body1" sx={{ textAlign: 'right', mt: 2 }}>
             Adding stats here.
-          </Typography>
+          </Typography> */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">{stats.in_flow ? 'Flow' : 'Insitu'}</Typography>
+              <Typography variant="h6">Tonnes</Typography>
+              <Typography variant="body1">({stats.designed_tonnes}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
+              <Typography variant="body1">x</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Draw</Typography>
+              <Typography variant="h6">Ratio</Typography>
+              <Typography variant="body1">{stats.draw_percentage})</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
+              <Typography variant="body1">+</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Draw</Typography>
+              <Typography variant="h6">Deviation</Typography>
+              <Typography variant="body1">{stats.draw_deviation}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
+              <Typography variant="body1">+</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Geology</Typography>
+              <Typography variant="h6">Overdraw</Typography>
+              <Typography variant="body1">{stats.overdraw_amount}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
+              <Typography variant="body1">-</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Bogged</Typography>
+              <Typography variant="h6">Tonnes</Typography>
+              <Typography variant="body1">{stats.bogged_tonnes}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
+              <Typography variant="body1">=</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'center' }}>
+              <Typography variant="h6">Remaining</Typography>
+              <Typography variant="h6">Tonnes</Typography>
+              <Typography variant="h5">
+                {Math.round(
+                  stats.designed_tonnes * stats.draw_percentage + stats.draw_deviation + stats.overdraw_amount - stats.bogged_tonnes
+                )}
+              </Typography>
+            </Box>
+          </Box>
         </CardContent>
       </MainCard>
 
