@@ -28,22 +28,23 @@ import {
 
 // third party
 import dayjs from 'dayjs';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { enqueueSnackbar } from 'notistack';
 
 // project imports
-import { fetcher } from 'utils/axios';
+import { fetcher, fetcherPost } from 'utils/axios';
 import BDCFBogTable from 'sections/tables/bdcf-bog-table';
 
 function BDCFEntryBogTab() {
   const [pickerDate, setPickerDate] = useState(() => dayjs());
   const [pickValue, setPickValue] = useState(() => formatDate(new Date()));
-  const [dropdownValue, setDropdownValue] = useState('');
-  const [textInput, setTextInput] = useState('');
-  const [shift, setShift] = useState('Day');
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRing, setSelectedRing] = useState({ location_id: '', name: '' });
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
+    const currentHour = dayjs().hour();
     const fetchBoggingRings = async () => {
       try {
         const response = await fetcher('/prod-actual/bdcf/bog/');
@@ -56,92 +57,150 @@ function BDCFEntryBogTab() {
     };
 
     fetchBoggingRings();
+
+    if (currentHour < 12) {
+      formik.setFieldValue('pickerDate', dayjs().subtract(1, 'day')); // Yesterday's date
+      formik.setFieldValue('shift', 'Night');
+    } else {
+      formik.setFieldValue('pickerDate', dayjs()); // Today's date
+      formik.setFieldValue('shift', 'Day');
+    }
   }, []);
 
-  const handleDateChange = (val) => {
-    setPickerDate(dayjs(val)); // whole date
-    setPickValue(formatDate(val)); // formatted date for API
-  };
+  const validationSchema = Yup.object({
+    tonnes: Yup.number().integer('Must be an integer').required('Tonnes is required'),
+    dropdownValue: Yup.string().required('You must select a ring')
+  });
 
-  const handleDropdownChange = (event) => {
-    const selectedValue = event.target.value;
-    setDropdownValue(selectedValue);
-
-    // Find the selected item in the data
-    const selectedItem = data.find((item) => item.location_id === selectedValue);
-    if (selectedItem) {
-      // Update the selected ring state to pass as props
-      setSelectedRing({
-        location_id: selectedItem.location_id,
-        name: selectedItem.value // Assuming 'value' is the human-readable name
-      });
-      console.log('Selected Ring:', selectedItem.location_id, selectedItem.value);
+  const formik = useFormik({
+    initialValues: {
+      tonnes: '',
+      pickerDate: null,
+      shift: '',
+      dropdownValue: ''
+    },
+    validationSchema: validationSchema,
+    onSubmit: (values) => {
+      handleSave(values);
     }
-  };
+  });
 
-  const handleTextInputChange = (event) => {
-    setTextInput(event.target.value);
-  };
+  const handleSave = async (values) => {
+    const formattedDate = formatDate(formik.values.pickerDate);
+    const location_id = formik.values.dropdownValue;
 
-  const handleShiftChange = (event) => {
-    setShift(event.target.value);
-  };
+    // Prepare the payload with the formatted date
+    const payload = {
+      date: formattedDate,
+      shift: formik.values.shift,
+      location_id: formik.values.dropdownValue,
+      tonnes: formik.values.tonnes
+    };
 
-  const handleSave = () => {
-    // Perform save action
-    console.log('Save clicked');
-    console.log('Date:', pickValue);
-    console.log('Shift:', shift);
-    console.log('Dropdown Value:', dropdownValue);
-    console.log('Text Input:', textInput);
+    try {
+      // Use fetcherPost to send the POST request
+      const response = await fetcherPost(`/prod-actual/bdcf/bog/${location_id}/`, payload);
+
+      // Log success or handle response as needed
+      console.log('Record added successfully:', response);
+
+      // Clear the text input (but keep the rest of the form data intact)
+      formik.setFieldValue('tonnes', '');
+      formik.setTouched({ tonnes: false });
+
+      enqueueSnackbar(response.msg.body, { variant: response.msg.type });
+
+      setRefreshKey((prevKey) => prevKey + 1);
+    } catch (error) {
+      // Handle error appropriately
+      console.error('Error adding record:', error);
+      enqueueSnackbar('Error adding record', { variant: 'error' });
+    }
   };
 
   return (
     <Grid container spacing={2}>
       {/* Form Section */}
       <Grid item xs={12} md={4}>
-        <Box sx={{ paddingBottom: '10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DesktopDatePicker
-                label="Movement Date"
-                format="DD/MM/YYYY"
-                disableFuture={true}
-                value={pickerDate}
-                onChange={handleDateChange}
-                textField={(params) => <TextField {...params} sx={{ width: '10rem' }} />}
-              />
-            </LocalizationProvider>
+        <form onSubmit={formik.handleSubmit}>
+          <Box sx={{ paddingBottom: '10px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DesktopDatePicker
+                  label="Movement Date"
+                  format="DD/MM/YYYY"
+                  disableFuture
+                  value={formik.values.pickerDate}
+                  onChange={(date) => formik.setFieldValue('pickerDate', date)}
+                  textField={(params) => <TextField {...params} sx={{ width: '10rem' }} />}
+                />
+              </LocalizationProvider>
 
-            <RadioGroup row value={shift} onChange={handleShiftChange}>
-              <FormControlLabel value="Day" control={<Radio />} label="Day" />
-              <FormControlLabel value="Night" control={<Radio />} label="Night" />
-            </RadioGroup>
+              <RadioGroup row value={formik.values.shift} onChange={(event) => formik.setFieldValue('shift', event.target.value)}>
+                <FormControlLabel value="Day" control={<Radio />} label="Day" />
+                <FormControlLabel value="Night" control={<Radio />} label="Night" />
+              </RadioGroup>
+            </Box>
+
+            <FormControl fullWidth>
+              <InputLabel id="dropdown-label">Select Ring</InputLabel>
+              <Select
+                labelId="dropdown-label"
+                value={formik.values.dropdownValue}
+                label="Select Ring"
+                onChange={(event) => {
+                  const selectedValue = event.target.value;
+                  formik.setFieldValue('dropdownValue', selectedValue);
+
+                  // Update formik state based on selected dropdown
+                  const selectedItem = data.find((item) => item.location_id === selectedValue);
+                  if (selectedItem) {
+                    formik.setFieldValue('selectedRing', {
+                      location_id: selectedItem.location_id,
+                      name: selectedItem.value
+                    });
+                  }
+                }}
+              >
+                {data.map((item) => (
+                  <MenuItem key={item.location_id} value={item.location_id}>
+                    {item.value}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              label="Tonnes"
+              name="tonnes"
+              value={formik.values.tonnes}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.tonnes && Boolean(formik.errors.tonnes)}
+              helperText={formik.touched.tonnes && formik.errors.tonnes}
+              fullWidth
+            />
+
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              disabled={!formik.isValid || !formik.values.tonnes || !formik.values.dropdownValue}
+            >
+              Add Bogging Record
+            </Button>
           </Box>
-
-          <FormControl fullWidth>
-            <InputLabel id="dropdown-label">Select Ring</InputLabel>
-            <Select labelId="dropdown-label" value={dropdownValue} label="Select Ring" onChange={handleDropdownChange}>
-              {data.map((item) => (
-                <MenuItem key={item.location_id} value={item.location_id}>
-                  {item.value}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <TextField label="Tonnes" value={textInput} onChange={handleTextInputChange} fullWidth />
-
-          <Button variant="contained" color="primary" onClick={handleSave}>
-            Add Bogging Record
-          </Button>
-        </Box>
+        </form>
       </Grid>
 
       <Grid item xs={12} md={8}>
         <TableContainer component={Paper}>
-          {selectedRing?.location_id && selectedRing?.name ? (
-            <BDCFBogTable location_id={selectedRing.location_id} ringName={selectedRing.name} />
+          {formik.values.dropdownValue ? (
+            <BDCFBogTable
+              location_id={formik.values.selectedRing?.location_id}
+              ringName={formik.values.selectedRing?.name}
+              refreshKey={refreshKey}
+            /> // This will trigger a re-render on change
           ) : (
             <Table>
               <TableHead>
