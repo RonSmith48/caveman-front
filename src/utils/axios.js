@@ -89,7 +89,7 @@ export const fetcherPost = async (url, data) => {
 export const fetcherPut = async (url, data) => {
   try {
     const response = await axiosServices.put(url, data);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error in PUT request:', error);
     throw error;
@@ -100,7 +100,7 @@ export const fetcherPut = async (url, data) => {
 export const fetcherDelete = async (url) => {
   try {
     const response = await axiosServices.delete(url);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error in DELETE request:', error);
     throw error;
