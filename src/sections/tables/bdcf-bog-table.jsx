@@ -21,24 +21,26 @@ import AssistWalkerOutlinedIcon from '@mui/icons-material/AssistWalkerOutlined';
 
 // third-party
 import { useReactTable, getCoreRowModel, flexRender } from '@tanstack/react-table';
+import { enqueueSnackbar } from 'notistack';
 
 // project-import
 import ScrollX from 'components/ScrollX';
 import MainCard from 'components/MainCard';
 import IconButton from 'components/@extended/IconButton';
 import CSVExport from 'components/third-party/react-table/CSVExport';
-import RowEditable from 'components/third-party/react-table/RowEditable';
-import { fetcher } from 'utils/axios';
+import RowEditable from './RowEditable';
+import { fetcher, fetcherPut, fetcherDelete } from 'utils/axios';
 import SvgAvatar from 'components/SvgAvatar';
 
 // assets
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
 import EditTwoTone from '@ant-design/icons/EditTwoTone';
 import SendOutlined from '@ant-design/icons/SendOutlined';
-import DeleteOutlined from '@ant-design/icon/DeleteOutlined';
+import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 
-function EditAction({ row, table }) {
+function EditAction({ row, table, fetchBoggingEntries }) {
   const meta = table?.options?.meta;
+
   const setSelectedRow = (e) => {
     meta?.setSelectedRow((old) => ({
       ...old,
@@ -49,17 +51,65 @@ function EditAction({ row, table }) {
     meta?.revertData(row.index, e?.currentTarget.name === 'cancel');
   };
 
+  const handleDelete = async () => {
+    const rowId = row.original.id;
+    try {
+      const response = await fetcherDelete(`/prod-actual/bdcf/bog/${rowId}/`);
+      if (response.status === 204) {
+        enqueueSnackbar('Record deleted successfully', { variant: 'success' });
+        fetchBoggingEntries();
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.msg?.body || 'An unexpected error occurred';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+      console.log(error);
+    }
+  };
+
+  const handleUpdate = async () => {
+    const rowId = row.original.id;
+    const updatedTonnes = row.original.tonnes; // Assume tonnes is being edited
+
+    console.log('handling update', updatedTonnes); //================
+    try {
+      const response = await fetcherPut(`/prod-actual/bdcf/bog/${rowId}/`, { tonnes: updatedTonnes });
+      if (response.status === 200) {
+        enqueueSnackbar('Record updated successfully', { variant: 'success' });
+        fetchBoggingEntries(); // Refresh table after update
+        setSelectedRow();
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.msg?.body || 'An unexpected error occurred';
+      enqueueSnackbar(errorMessage, { variant: 'error' });
+      console.log(error);
+    }
+  };
+
   return (
     <Stack direction="row" spacing={1} alignItems="center">
       {meta?.selectedRow[row.id] && (
-        <Tooltip title="Cancel">
-          <IconButton color="error" name="cancel" onClick={setSelectedRow}>
-            <CloseOutlined />
-          </IconButton>
-        </Tooltip>
+        <>
+          {/* Cancel Button */}
+          <Tooltip title="Cancel">
+            <IconButton color="primary" name="cancel" onClick={setSelectedRow}>
+              <CloseOutlined />
+            </IconButton>
+          </Tooltip>
+
+          {/* Delete Button (Only visible in edit mode) */}
+          <Tooltip title="Delete">
+            <IconButton color="error" onClick={handleDelete}>
+              <DeleteOutlined />
+            </IconButton>
+          </Tooltip>
+        </>
       )}
+
       <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Edit'}>
-        <IconButton color={meta?.selectedRow[row.id] ? 'success' : 'primary'} onClick={setSelectedRow}>
+        <IconButton
+          color={meta?.selectedRow[row.id] ? 'success' : 'primary'}
+          onClick={meta?.selectedRow[row.id] ? handleUpdate : setSelectedRow}
+        >
           {meta?.selectedRow[row.id] ? <SendOutlined /> : <EditTwoTone />}
         </IconButton>
       </Tooltip>
@@ -159,21 +209,21 @@ export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
   const [loading, setLoading] = useState(true);
   const SM_AVATAR_SIZE = 32;
 
-  useEffect(() => {
-    const fetchBoggingEntries = async () => {
-      if (!location_id) return; // Skip fetch if location_id is not available
-      setLoading(true);
-      try {
-        const response = await fetcher(`/prod-actual/bdcf/bog/${location_id}`);
-        setData(response.data);
-        setStats(response.stats);
-      } catch (error) {
-        console.error('Error fetching active rings list:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchBoggingEntries = async () => {
+    if (!location_id) return; // Skip fetch if location_id is not available
+    setLoading(true);
+    try {
+      const response = await fetcher(`/prod-actual/bdcf/bog/${location_id}`);
+      setData(response.data);
+      setStats(response.stats);
+    } catch (error) {
+      console.error('Error fetching active rings list:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBoggingEntries();
   }, [location_id, refreshKey]);
 
@@ -183,12 +233,15 @@ export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
       {
         header: 'Date',
         accessorKey: 'date',
-        dataType: 'text'
+        dataType: 'text',
+        cell: ({ row }) => {
+          return row.original.date;
+        }
       },
       {
         header: 'Tonnes',
         accessorKey: 'tonnes',
-        dataType: 'text',
+        dataType: 'int',
         meta: {
           className: 'cell-right'
         }
@@ -248,13 +301,13 @@ export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
       {
         header: 'Actions',
         id: 'edit',
-        cell: EditAction,
+        cell: (props) => <EditAction {...props} fetchBoggingEntries={fetchBoggingEntries} />,
         meta: {
           className: 'cell-center'
         }
       }
     ],
-    [] // Ensure this dependency array remains empty for stable columns
+    [fetchBoggingEntries]
   );
 
   // Ensure consistent render order by checking loading status outside of the main return
