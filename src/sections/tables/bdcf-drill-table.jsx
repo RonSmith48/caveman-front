@@ -203,7 +203,7 @@ function ReactTable({ columns, data, setData }) {
 
 // ==============================|| REACT TABLE - EDITABLE ROW ||============================== //
 
-export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
+export default function BDCFDrillTable({ location_id, ringName, refreshKey }) {
   const [data, setData] = useState([]);
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
