@@ -85,6 +85,20 @@ function BDCFEntryBogTab() {
     }
   });
 
+  const handleSelectRing = (event) => {
+    const selectedValue = event.target.value;
+    formik.setFieldValue('dropdownValue', selectedValue);
+
+    // Update formik state based on selected dropdown
+    const selectedItem = data.find((item) => item.location_id === selectedValue);
+    if (selectedItem) {
+      formik.setFieldValue('selectedRing', {
+        location_id: selectedItem.location_id,
+        name: selectedItem.value
+      });
+    }
+  };
+
   const handleSave = async (values) => {
     const formattedDate = formatDate(formik.values.pickerDate);
     const location_id = formik.values.dropdownValue;
@@ -144,24 +158,7 @@ function BDCFEntryBogTab() {
 
             <FormControl fullWidth>
               <InputLabel id="dropdown-label">Select Ring</InputLabel>
-              <Select
-                labelId="dropdown-label"
-                value={formik.values.dropdownValue}
-                label="Select Ring"
-                onChange={(event) => {
-                  const selectedValue = event.target.value;
-                  formik.setFieldValue('dropdownValue', selectedValue);
-
-                  // Update formik state based on selected dropdown
-                  const selectedItem = data.find((item) => item.location_id === selectedValue);
-                  if (selectedItem) {
-                    formik.setFieldValue('selectedRing', {
-                      location_id: selectedItem.location_id,
-                      name: selectedItem.value
-                    });
-                  }
-                }}
-              >
+              <Select labelId="dropdown-label" value={formik.values.dropdownValue} label="Select Ring" onChange={handleSelectRing}>
                 {data.map((item) => (
                   <MenuItem key={item.location_id} value={item.location_id}>
                     {item.value}
