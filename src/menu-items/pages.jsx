@@ -18,6 +18,20 @@ const pages = {
   type: 'group',
   children: [
     {
+      id: 'stp',
+      title: <FormattedMessage id="stp" />,
+      type: 'collapse',
+      icon: icons.EmojiFlagsOutlined,
+      children: [
+        {
+          id: '3mrp',
+          title: <FormattedMessage id="3mrp" />,
+          type: 'item',
+          url: '/stp/3mrp'
+        }
+      ]
+    },
+    {
       id: 'integrated-planning',
       title: <FormattedMessage id="integrated-planning" />,
       type: 'collapse',
