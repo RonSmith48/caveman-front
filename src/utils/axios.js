@@ -1,4 +1,5 @@
 import axios from 'axios';
+import Router from 'next/router';
 
 const axiosServices = axios.create({ baseURL: process.env.NEXT_PUBLIC_API_URL });
 
@@ -53,6 +54,10 @@ axiosServices.interceptors.response.use(
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('user');
+
+        if (typeof window !== 'undefined') {
+          Router.push('/login');
+        }
         return Promise.reject(refreshError);
       }
     }
