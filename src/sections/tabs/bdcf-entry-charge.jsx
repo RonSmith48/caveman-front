@@ -26,7 +26,7 @@ function BDCFEntryChargeTab() {
     const fetchBoggingRings = async () => {
       try {
         const response = await fetcher('/prod/bdcf/charging/');
-        setData(JSON.parse(response));
+        setData(JSON.parse(response.data));
       } catch (error) {
         console.error('Error fetching active rings list:', error);
       } finally {

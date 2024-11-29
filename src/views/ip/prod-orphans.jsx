@@ -200,7 +200,9 @@ export default function ColumnVisibility() {
     const fetchOrphanedRings = async () => {
       try {
         const response = await fetcher('/prod-actual/orphaned-rings/');
-        setData(response); // assuming pagination with 'results' key
+        if (response && response.data) {
+          setData(response.data); // assuming pagination with 'results' key
+        }
       } catch (error) {
         console.error('Error fetching orphaned rings:', error);
       } finally {

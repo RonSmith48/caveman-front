@@ -31,7 +31,7 @@ function FMFileHeadersSettingsForm() {
     try {
       const data = await fetcher('/settings/fm_file_headers'); // Using the fetcher function
       if (data) {
-        setHeaders(data.value); // Assuming the setting value is stored in `value`
+        setHeaders(data.data.value); // Assuming the setting value is stored in `value`
       } else {
         setHeaders({});
       }

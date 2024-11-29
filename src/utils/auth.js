@@ -60,7 +60,7 @@ export const updateUser = async (updatedUserData) => {
     const response = await fetcherPatch('users/update/', updatedUserData);
 
     console.log('response:', response); //============
-    if (response.msg.type === 'success') {
+    if (response.data.msg.type === 'success') {
       const currentUser = JSON.parse(localStorage.getItem('user'));
 
       const updatedUser = {
@@ -69,12 +69,12 @@ export const updateUser = async (updatedUserData) => {
       };
 
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      enqueueSnackbar(response.msg.body, { variant: response.msg.type });
+      enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
 
       return { ok: true, user: updatedUser };
     } else {
-      enqueueSnackbar(response.msg.body, { variant: response.msg.type });
-      return { ok: false, error: response.msg.body };
+      enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+      return { ok: false, error: response.data.msg.body };
     }
   } catch (error) {
     console.log('error:', error); //==================

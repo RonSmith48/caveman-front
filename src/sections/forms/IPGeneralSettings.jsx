@@ -32,7 +32,7 @@ function IPGeneralSettingsForm() {
     try {
       const data = await fetcher('/settings/ip_general'); // Using the fetcher function
       if (data) {
-        setSettings(data.value); // Assuming the setting value is stored in `value`
+        setSettings(data.data.value); // Assuming the setting value is stored in `value`
       } else {
         setSettings({});
       }

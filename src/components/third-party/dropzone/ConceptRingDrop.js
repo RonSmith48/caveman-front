@@ -60,9 +60,9 @@ const SingleFileUpload = ({ error, file, sx }) => {
 
     try {
       const data = await fetcher('/settings/fm_file_headers');
-      if (data && data.value) {
+      if (data && data.data.value) {
         // Set the values of the headers from the JSON object
-        setExpectedHeaders(data.value);
+        setExpectedHeaders(data.data.value);
       } else {
         setAlertOpen(true);
       }

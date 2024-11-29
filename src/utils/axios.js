@@ -72,7 +72,7 @@ export default axiosServices;
 export const fetcher = async (url, params = {}) => {
   try {
     const response = await axiosServices.get(url, { params });
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error in GET request:', error);
     throw error;
@@ -83,7 +83,7 @@ export const fetcher = async (url, params = {}) => {
 export const fetcherPost = async (url, data) => {
   try {
     const response = await axiosServices.post(url, data);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error in POST request:', error);
     throw error;
@@ -116,7 +116,7 @@ export const fetcherDelete = async (url) => {
 export const fetcherPatch = async (url, data) => {
   try {
     const response = await axiosServices.patch(url, data);
-    return response.data;
+    return response;
   } catch (error) {
     console.error('Error in PATCH request:', error);
     throw error;

@@ -61,8 +61,8 @@ const SingleFileUpload = ({ error, file, sx }) => {
 
     try {
       const data = await fetcher('/settings/drill_scenario_file_headers');
-      if (data && data.value) {
-        setExpectedHeaders(data.value);
+      if (data && data.data.value) {
+        setExpectedHeaders(data.data.value);
       }
     } catch (error) {
       enqueueSnackbar('Ensure that you set CSV headers before upload', { variant: 'info' });

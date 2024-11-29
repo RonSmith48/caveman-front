@@ -31,7 +31,7 @@ function DrillScenarioHeadersSettingsForm() {
     try {
       const data = await fetcher('/settings/drill_scenario_file_headers'); // Using the fetcher function
       if (data) {
-        setHeaders(data.value); // Assuming the setting value is stored in `value`
+        setHeaders(data.data.value); // Assuming the setting value is stored in `value`
       } else {
         setHeaders({});
       }
@@ -82,7 +82,7 @@ function DrillScenarioHeadersSettingsForm() {
             y: headers?.y || '',
             z: headers?.z || '',
             start: headers?.start || '',
-            finish: headers?.finish || '',
+            finish: headers?.finish || ''
           }}
           validationSchema={Yup.object().shape({
             id: Yup.string().max(50).required('This is a required field.'),
@@ -92,7 +92,7 @@ function DrillScenarioHeadersSettingsForm() {
             y: Yup.string().max(50).required('This is a required field.'),
             z: Yup.string().max(50).required('This is a required field.'),
             start: Yup.string().max(50).required('This is a required field.'),
-            finish: Yup.string().max(50).required('This is a required field.'),
+            finish: Yup.string().max(50).required('This is a required field.')
           })}
           onSubmit={(values, { setErrors, setStatus, setSubmitting }) => {
             setSubmitting(true);
@@ -215,7 +215,14 @@ function DrillScenarioHeadersSettingsForm() {
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Start :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
-                      <TextField fullWidth id="headers-start" value={values.start} name="start" onBlur={handleBlur} onChange={handleChange} />
+                      <TextField
+                        fullWidth
+                        id="headers-start"
+                        value={values.start}
+                        name="start"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                      />
                       {touched.start && errors.start && (
                         <FormHelperText error id="headers-start-helper">
                           {errors.start}
@@ -230,7 +237,14 @@ function DrillScenarioHeadersSettingsForm() {
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Finish :</InputLabel>
                     </Grid>
                     <Grid item xs={12} sm={9} lg={8}>
-                      <TextField fullWidth id="headers-finish" value={values.finish} name="finish" onBlur={handleBlur} onChange={handleChange} />
+                      <TextField
+                        fullWidth
+                        id="headers-finish"
+                        value={values.finish}
+                        name="finish"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                      />
                       {touched.finish && errors.finish && (
                         <FormHelperText error id="headers-finish-helper">
                           {errors.finish}

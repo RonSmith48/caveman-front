@@ -48,7 +48,8 @@ function BDCFEntryDrillTab() {
     const fetchBoggingRings = async () => {
       try {
         const response = await fetcher('/prod-actual/bdcf/drill/');
-        setData(response);
+        setData(response.data);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching designed rings list:', error);
       } finally {
@@ -57,9 +58,6 @@ function BDCFEntryDrillTab() {
     };
 
     fetchBoggingRings();
-
-    // formik.setFieldValue('pickerDate', dayjs().subtract(1, 'day')); // Yesterday's date
-    // formik.setFieldValue('shift', 'Day');
   }, []);
 
   const validationSchema = Yup.object().shape({
@@ -93,6 +91,11 @@ function BDCFEntryDrillTab() {
     }
   });
 
+  const toggleIsRedrill = async () => {
+    formik.setFieldValue('selectOredrive', '');
+    formik.setFieldValue('selectRing', '');
+  };
+
   const handleSelectOredrive = async (event) => {
     const lvl_od = event.target.value;
     formik.setFieldValue('selectOredrive', lvl_od);
@@ -121,7 +124,7 @@ function BDCFEntryDrillTab() {
     } */
   };
 
-  const handleRedrill = () => {
+  const handleIncomplete = () => {
     formik.setFieldValue('half_drilled', !formik.values.half_drilled);
     setApiPath('drilled');
   };
@@ -183,7 +186,7 @@ function BDCFEntryDrillTab() {
                     labelPlacement="end"
                   />
                   <FormControlLabel
-                    control={<Checkbox checked={formik.values.half_drilled} onChange={handleRedrill} />}
+                    control={<Checkbox checked={formik.values.half_drilled} onChange={handleIncomplete} />}
                     label="Incomplete"
                     labelPlacement="end"
                   />

@@ -38,7 +38,7 @@ export default function TableCustom() {
     const fetchLevelStatus = async () => {
       try {
         const response = await fetcher('/report/prod/level-status/');
-        setData(JSON.parse(response));
+        setData(JSON.parse(response.data));
       } catch (error) {
         console.error('Error fetching level status report:', error);
       } finally {

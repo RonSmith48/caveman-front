@@ -17,8 +17,8 @@ export default function OrphanedProdRingsWidget() {
     const fetchOrphanCount = async () => {
       try {
         const response = await fetcher('report/orphaned-prod-rings-count/');
-        if (response && response['orphan count']) {
-          setOrphanCount(response['orphan count']);
+        if (response && response.data['orphan count']) {
+          setOrphanCount(response.data['orphan count']);
         } else {
           enqueueSnackbar('Error fetching orphaned rings count', { variant: 'error' });
         }
@@ -36,9 +36,9 @@ export default function OrphanedProdRingsWidget() {
       setLoading(true);
       const response = await fetcher('prod-actual/orphaned-rings/process/');
 
-      if (response && response['orphan count']) {
-        setOrphanCount(response['orphan count']); // Update orphan count after processing
-        enqueueSnackbar(response['msg']['body'], { variant: 'success' });
+      if (response && response.data['orphan count']) {
+        setOrphanCount(response.data['orphan count']); // Update orphan count after processing
+        enqueueSnackbar(response.data['msg']['body'], { variant: 'success' });
       } else {
         enqueueSnackbar('Error processing orphaned rings', { variant: 'error' });
       }

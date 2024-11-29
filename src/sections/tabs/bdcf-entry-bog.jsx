@@ -48,7 +48,7 @@ function BDCFEntryBogTab() {
     const fetchBoggingRings = async () => {
       try {
         const response = await fetcher('/prod-actual/bdcf/bog/');
-        setData(response);
+        setData(response.data);
       } catch (error) {
         console.error('Error fetching active rings list:', error);
       } finally {
@@ -122,7 +122,7 @@ function BDCFEntryBogTab() {
       formik.setFieldValue('tonnes', '');
       formik.setTouched({ tonnes: false });
 
-      enqueueSnackbar(response.msg.body, { variant: response.msg.type });
+      enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
 
       setRefreshKey((prevKey) => prevKey + 1);
     } catch (error) {
