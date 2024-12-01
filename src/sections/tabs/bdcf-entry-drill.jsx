@@ -39,17 +39,22 @@ import { fetcher, fetcherPost } from 'utils/axios';
 import BDCFDrillTable from 'sections/tables/bdcf-drill-table';
 
 function BDCFEntryDrillTab() {
-  const [data, setData] = useState([]);
-  const [ringList, setRingList] = useState([]);
-  const [apiPath, setApiPath] = useState('to-drill');
+  const [data, setData] = useState({ drilled_list: [], designed_list: [] });
+  const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [ringNumDrop, setRingNumDrop] = useState([]);
+  const [isRedrill, setIsRedrill] = useState(false);
+  const [drilledRings, setDrilledRings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingRings, setLoadingRings] = useState(false);
 
   useEffect(() => {
-    const fetchBoggingRings = async () => {
+    const fetchData = async () => {
       try {
         const response = await fetcher('/prod-actual/bdcf/drill/');
         setData(response.data);
+        setDropdownOptions(response.data.designed_list);
         setLoading(false);
+        console.log(response);
       } catch (error) {
         console.error('Error fetching designed rings list:', error);
       } finally {
@@ -57,7 +62,7 @@ function BDCFEntryDrillTab() {
       }
     };
 
-    fetchBoggingRings();
+    fetchData();
   }, []);
 
   const validationSchema = Yup.object().shape({
@@ -69,7 +74,8 @@ function BDCFEntryDrillTab() {
     redrill: Yup.boolean(),
     half_drilled: Yup.boolean(),
     lost_rods: Yup.boolean(),
-    has_bg: Yup.boolean()
+    has_bg: Yup.boolean(),
+    making_water: Yup.boolean()
   });
 
   const formik = useFormik({
@@ -79,21 +85,51 @@ function BDCFEntryDrillTab() {
       selectOredrive: '',
       selectRing: '',
       drilled_mtrs: '',
-      redrill: false,
+      redrill: isRedrill,
       half_drilled: false,
       lost_rods: false,
-      has_bg: false
+      has_bg: false,
+      making_water: false
     },
-    validationSchema, // Add the validation schema here
-    onSubmit: (values) => {
-      console.log(values);
-      // Handle form submission
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        const formattedDate = formatDate(values.pickerDate);
+        const payload = {
+          date: formattedDate,
+          shift: values.shift,
+          location_id: values.selectRing, // Use selectRing as location_id
+          drilled_mtrs: values.drilled_mtrs || null,
+          redrill: isRedrill,
+          half_drilled: values.half_drilled,
+          lost_rods: values.lost_rods,
+          has_bg: values.has_bg,
+          making_water: values.making_water,
+          status: 'Drilled'
+        };
+
+        const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
+
+        enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+
+        // Optionally reset the form or refetch data
+        formik.resetForm();
+        const currentOredrive = values.selectOredrive; // Get the current oredrive
+        if (currentOredrive) {
+          await handleSelectOredrive({ target: { value: currentOredrive } }); // Refetch rings for the current oredrive
+        }
+      } catch (error) {
+        console.error('Error processing drill return:', error);
+        enqueueSnackbar('Failed to process drill return. Please try again.', { variant: 'error' });
+      }
     }
   });
 
-  const toggleIsRedrill = async () => {
+  const handleIsRedrillToggle = () => {
     formik.setFieldValue('selectOredrive', '');
     formik.setFieldValue('selectRing', '');
+    setIsRedrill(!isRedrill);
+    setDropdownOptions(isRedrill ? data.designed_list : data.drilled_list); // Toggle between lists
   };
 
   const handleSelectOredrive = async (event) => {
@@ -101,32 +137,31 @@ function BDCFEntryDrillTab() {
     formik.setFieldValue('selectOredrive', lvl_od);
     formik.setFieldValue('selectRing', '');
 
+    setLoadingRings(true);
+
     try {
-      const response = await fetcher(`/prod-actual/bdcf/${apiPath}/${lvl_od}/`);
-      setRingList(response);
+      const response = await fetcher(`/prod-actual/bdcf/drilled/${lvl_od}/`);
+      const rings = isRedrill ? response.data.drilled : response.data.designed;
+
+      setDrilledRings(response.data.drilled_rings);
+      setRingNumDrop(rings);
+      setDrilledRings(response.data.drilled_rings || []);
+      setLoadingRings(false);
     } catch (error) {
       // Handle error appropriately
       console.error('Error fetching rings:', error);
       enqueueSnackbar('Error fetching rings', { variant: 'error' });
+      setLoadingRings(false);
     }
   };
 
   const handleSelectRing = async (event) => {
     const selectedRing = event.target.value;
     formik.setFieldValue('selectRing', selectedRing);
-
-    /*     const selectedItem = ringList.find((item) => item.level_oredrive === selectedRing);
-    if (selectedItem) {
-      formik.setFieldValue('selectedRing', {
-        location_id: selectedItem.level_oredrive,
-        name: selectedItem.level_oredrive
-      });
-    } */
   };
 
   const handleIncomplete = () => {
     formik.setFieldValue('half_drilled', !formik.values.half_drilled);
-    setApiPath('drilled');
   };
 
   const isSubmitDisabled = () => {
@@ -134,18 +169,6 @@ function BDCFEntryDrillTab() {
     return !(
       (formik.values.selectOredrive && formik.values.selectRing && (!formik.values.half_drilled || formik.values.drilled_mtrs)) // if half_drilled is checked, drilled_mtrs must be filled
     );
-  };
-
-  const handleSave = async (values) => {
-    const formattedDate = formatDate(formik.values.pickerDate);
-    const location_id = formik.values.ringdropdownValue;
-
-    // Prepare the payload with the formatted date
-    const payload = {
-      date: formattedDate,
-      shift: formik.values.shift,
-      location_id: formik.values.ringdropdownValue
-    };
   };
 
   return (
@@ -176,12 +199,7 @@ function BDCFEntryDrillTab() {
               <FormGroup aria-label="position" row>
                 <Grid xs={6}>
                   <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={formik.values.redrilled}
-                        onChange={() => formik.setFieldValue('redrill', !formik.values.redrilled)}
-                      />
-                    }
+                    control={<Checkbox checked={isRedrill} onChange={handleIsRedrillToggle} />}
                     label="Is Redrill"
                     labelPlacement="end"
                   />
@@ -210,6 +228,18 @@ function BDCFEntryDrillTab() {
                     labelPlacement="end"
                   />
                 </Grid>
+                <Grid xs={6}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={formik.values.making_water}
+                        onChange={() => formik.setFieldValue('making_water', !formik.values.making_water)}
+                      />
+                    }
+                    label="Is Making Water"
+                    labelPlacement="end"
+                  />
+                </Grid>
               </FormGroup>
             </FormControl>
 
@@ -235,7 +265,7 @@ function BDCFEntryDrillTab() {
                 label="Select Ore Drive"
                 onChange={handleSelectOredrive}
               >
-                {data.map((item) => (
+                {dropdownOptions.map((item) => (
                   <MenuItem key={item.level_oredrive} value={item.level_oredrive}>
                     {item.level_oredrive}
                   </MenuItem>
@@ -246,7 +276,7 @@ function BDCFEntryDrillTab() {
             <FormControl fullWidth>
               <InputLabel id="dropdown-label">Select Ring</InputLabel>
               <Select labelId="dropdown-label" value={formik.values.selectRing || ''} label="Select Ring" onChange={handleSelectRing}>
-                {ringList.map((item) => (
+                {ringNumDrop.map((item) => (
                   <MenuItem key={item.location_id} value={item.location_id}>
                     {item.ring_number_txt}
                   </MenuItem>
@@ -263,16 +293,19 @@ function BDCFEntryDrillTab() {
 
       <Grid item xs={12} md={8}>
         <TableContainer component={Paper}>
-          {formik.values.dropdownValue ? (
-            <BDCFDrillTable location_id={formik.values.selectedRing?.location_id} ringName={formik.values.selectedRing?.name} /> // This will trigger a re-render on change
+          {formik.values.selectOredrive ? (
+            loadingRings ? (
+              <Typography variant="body2">Loading rings...</Typography>
+            ) : (
+              <BDCFDrillTable oredrive={formik.values.selectOredrive} ringData={drilledRings} handleSelectOredrive={handleSelectOredrive} />
+            )
           ) : (
             <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
                   <TableCell>Ring</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Contributor</TableCell>
+                  <TableCell>Tags</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>

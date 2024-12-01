@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import { useMemo, useState, useEffect } from 'react';
 
 // material-ui
-import Box from '@mui/material/Box';
+import Autocomplete from '@mui/material/Autocomplete';
 import Stack from '@mui/material/Stack';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -13,8 +13,8 @@ import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Tooltip from '@mui/material/Tooltip';
-import Typography from '@mui/material/Typography';
-import CardContent from '@mui/material/CardContent';
+import TextField from '@mui/material/TextField';
+import Chip from '@mui/material/Chip';
 
 import SupportAgentOutlinedIcon from '@mui/icons-material/SupportAgentOutlined';
 import AssistWalkerOutlinedIcon from '@mui/icons-material/AssistWalkerOutlined';
@@ -29,7 +29,7 @@ import MainCard from 'components/MainCard';
 import IconButton from 'components/@extended/IconButton';
 import CSVExport from 'components/third-party/react-table/CSVExport';
 import RowEditable from './bog-RowEditable';
-import { fetcher, fetcherPut, fetcherDelete } from 'utils/axios';
+import { fetcher, fetcherPut, fetcherPost } from 'utils/axios';
 import SvgAvatar from 'components/SvgAvatar';
 
 // assets
@@ -38,7 +38,7 @@ import EditTwoTone from '@ant-design/icons/EditTwoTone';
 import SendOutlined from '@ant-design/icons/SendOutlined';
 import DeleteOutlined from '@ant-design/icons/DeleteOutlined';
 
-function EditAction({ row, table, fetchBoggingEntries }) {
+function EditAction({ row, table }) {
   const meta = table?.options?.meta;
 
   const setSelectedRow = (e) => {
@@ -51,13 +51,24 @@ function EditAction({ row, table, fetchBoggingEntries }) {
     meta?.revertData(row.index, e?.currentTarget.name === 'cancel');
   };
 
-  const handleDelete = async () => {
-    const rowId = row.original.id;
+  const handleUndrill = async () => {
+    const location_id = row.original.location_id;
+    const payload = {
+      location_id: location_id,
+      date: null,
+      redrill: false,
+      lost_rods: false,
+      has_bg: false,
+      making_water: false,
+      status: 'Designed'
+    };
     try {
-      const response = await fetcherDelete(`/prod-actual/bdcf/bog/${rowId}/`);
-      if (response.status === 204) {
-        enqueueSnackbar('Record deleted successfully', { variant: 'success' });
-        fetchBoggingEntries();
+      const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
+      if (response.status === 200) {
+        enqueueSnackbar('Ring un-drilled successfully', { variant: 'success' });
+        if (meta?.handleSelectOredrive) {
+          await meta.handleSelectOredrive({ target: { value: meta.currentOredrive } });
+        }
       }
     } catch (error) {
       const errorMessage = error.response?.data?.msg?.body || 'An unexpected error occurred';
@@ -67,21 +78,48 @@ function EditAction({ row, table, fetchBoggingEntries }) {
   };
 
   const handleUpdate = async () => {
-    const rowId = row.original.id;
-    const updatedTonnes = row.original.tonnes; // Assume tonnes is being edited
+    const meta = table?.options?.meta;
 
-    console.log('handling update', updatedTonnes); //================
+    if (!meta || !meta.data || !meta.setData) {
+      console.error('Meta, data, or setData is not available in handleUpdate');
+      return;
+    }
+
+    const updatedRow = meta.data.find((rowData) => rowData.location_id === row.original.location_id);
+
+    if (!updatedRow) {
+      console.error('Updated row not found in data');
+      return;
+    }
+
+    const payload = {
+      location_id: updatedRow.location_id,
+      drill_complete_date: updatedRow.drill_complete_date,
+      redrill: updatedRow.is_redrilled,
+      lost_rods: updatedRow.has_lost_rods,
+      has_bg: updatedRow.has_bg_report,
+      making_water: updatedRow.is_making_water,
+      status: 'Drilled'
+    };
+
     try {
-      const response = await fetcherPut(`/prod-actual/bdcf/bog/${rowId}/`, { tonnes: updatedTonnes });
+      const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
+
       if (response.status === 200) {
-        enqueueSnackbar('Record updated successfully', { variant: 'success' });
-        fetchBoggingEntries(); // Refresh table after update
-        setSelectedRow();
+        enqueueSnackbar('Row updated successfully', { variant: 'success' });
+
+        if (meta.handleSelectOredrive) {
+          await meta.handleSelectOredrive({
+            target: { value: meta.currentOredrive }
+          });
+        }
+      } else {
+        enqueueSnackbar('Failed to update row', { variant: 'error' });
       }
     } catch (error) {
       const errorMessage = error.response?.data?.msg?.body || 'An unexpected error occurred';
       enqueueSnackbar(errorMessage, { variant: 'error' });
-      console.log(error);
+      console.error(error);
     }
   };
 
@@ -97,8 +135,8 @@ function EditAction({ row, table, fetchBoggingEntries }) {
           </Tooltip>
 
           {/* Delete Button (Only visible in edit mode) */}
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={handleDelete}>
+          <Tooltip title="Un-Drill">
+            <IconButton color="error" onClick={handleUndrill}>
               <DeleteOutlined />
             </IconButton>
           </Tooltip>
@@ -119,7 +157,7 @@ function EditAction({ row, table, fetchBoggingEntries }) {
 
 // ==============================|| REACT TABLE ||============================== //
 
-function ReactTable({ columns, data, setData }) {
+function ReactTable({ columns, data, setData, handleSelectOredrive, currentOredrive }) {
   const [originalData, setOriginalData] = useState(() => [...data]);
   const [selectedRow, setSelectedRow] = useState({});
 
@@ -133,6 +171,10 @@ function ReactTable({ columns, data, setData }) {
     meta: {
       selectedRow,
       setSelectedRow,
+      data,
+      setData,
+      handleSelectOredrive,
+      currentOredrive,
       revertData: (rowIndex, revert) => {
         if (revert) {
           setData((old) => old.map((row, index) => (index === rowIndex ? originalData[rowIndex] : row)));
@@ -203,183 +245,117 @@ function ReactTable({ columns, data, setData }) {
 
 // ==============================|| REACT TABLE - EDITABLE ROW ||============================== //
 
-export default function BDCFDrillTable({ location_id, ringName, refreshKey }) {
-  const [data, setData] = useState([]);
-  const [stats, setStats] = useState([]);
+export default function BDCFDrillTable({ oredrive, ringData, handleSelectOredrive }) {
+  const [data, setData] = useState(ringData);
   const [loading, setLoading] = useState(true);
   const SM_AVATAR_SIZE = 32;
 
-  const fetchBoggingEntries = async () => {
-    if (!location_id) return; // Skip fetch if location_id is not available
-    setLoading(true);
-    try {
-      const response = await fetcher(`/prod-actual/bdcf/bog/${location_id}`);
-      setData(response.data);
-      setStats(response.stats);
-    } catch (error) {
-      console.error('Error fetching active rings list:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchBoggingEntries();
-  }, [location_id, refreshKey]);
+    setData(ringData); // Update table data when ringData changes
+  }, [ringData]);
 
   // Memoize columns outside of any conditional statement
   const columns = useMemo(
     () => [
       {
-        header: 'Date',
-        accessorKey: 'date',
-        dataType: 'text',
-        cell: ({ row }) => {
-          return row.original.date;
-        }
+        header: 'Completion Date',
+        accessorKey: 'drill_complete_date',
+        cell: (info) => info.getValue() || 'N/A' // Display "N/A" if no value
       },
       {
-        header: 'Tonnes',
-        accessorKey: 'tonnes',
-        dataType: 'int',
-        meta: {
-          className: 'cell-right'
-        }
+        header: 'Ring',
+        accessorKey: 'ring_number_txt',
+        cell: (info) => info.getValue()
       },
       {
-        header: 'Entered (timestamp)',
-        accessorKey: 'timestamp',
-        dataType: 'text',
-        cell: ({ row }) => {
-          const date = new Date(row.original.timestamp);
-          return new Intl.DateTimeFormat('en-GB', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true
-          }).format(date);
-        }
-      },
-      {
-        header: 'Contributor',
-        accessorKey: 'contributor',
-        dataType: 'text',
-        cell: ({ row }) => {
-          const contributor = row.original.contributor;
-          return contributor ? (
-            <Tooltip title={contributor.full_name}>
-              <div
-                style={{
-                  width: SM_AVATAR_SIZE,
-                  height: SM_AVATAR_SIZE,
-                  backgroundColor: contributor?.bg_colour,
-                  borderRadius: '50%', // Makes the background a circle
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  overflow: 'hidden' // Ensures the avatar stays inside the circle
+        header: 'Conditions',
+        accessorKey: 'conditions',
+        cell: (info) => {
+          const row = info.row.original;
+          const meta = info.table.options.meta;
+          const isEditing = meta.selectedRow[info.row.id];
+
+          const conditions = [
+            { key: 'is_redrilled', label: 'Redrilled' },
+            { key: 'has_lost_rods', label: 'Lost Rods' },
+            { key: 'has_bg_report', label: 'BG Reported' },
+            { key: 'is_making_water', label: 'Making Water' }
+          ];
+
+          const selectedConditions = conditions.filter((cond) => row[cond.key]);
+
+          if (isEditing) {
+            return (
+              <Autocomplete
+                multiple
+                id={`autocomplete-${info.row.id}`}
+                options={conditions}
+                getOptionLabel={(option) => option.label}
+                value={selectedConditions} // Use controlled value
+                isOptionEqualToValue={(option, value) => option.key === value.key} // Custom equality check
+                onChange={(event, newValue) => {
+                  // Map selected conditions to a key-value object
+                  const updatedConditions = conditions.reduce((acc, cond) => {
+                    acc[cond.key] = newValue.some((val) => val.key === cond.key);
+                    return acc;
+                  }, {});
+
+                  // Update the row's conditions
+                  meta.updateData(info.row.index, 'conditions', updatedConditions);
+
+                  // Update the individual keys in the row
+                  Object.keys(updatedConditions).forEach((key) => {
+                    meta.updateData(info.row.index, key, updatedConditions[key]);
+                  });
                 }}
-              >
-                <SvgAvatar src={contributor?.avatar} alt={contributor?.full_name} size={SM_AVATAR_SIZE} />
-              </div>
-            </Tooltip>
-          ) : (
-            <Tooltip title="Legacy PMD">
-              <div>
-                <AssistWalkerOutlinedIcon fontSize="large" />
-              </div>
-            </Tooltip>
+                renderInput={(params) => <TextField {...params} placeholder="Select Conditions" />}
+                sx={{
+                  '& .MuiOutlinedInput-root': { p: 1 },
+                  '& .MuiAutocomplete-tag': {
+                    bgcolor: 'primary.lighter',
+                    border: '1px solid',
+                    borderColor: 'primary.light',
+                    '& .MuiSvgIcon-root': {
+                      color: 'primary.main',
+                      '&:hover': {
+                        color: 'primary.dark'
+                      }
+                    }
+                  }
+                }}
+              />
+            );
+          }
+
+          // Render chips for non-editable mode
+          return (
+            <Stack direction="row" flexWrap="wrap">
+              {selectedConditions.map((cond) => (
+                <Chip key={cond.key} label={cond.label} variant="outlined" color="primary" size="small" sx={{ margin: '0 4px 4px 0' }} />
+              ))}
+            </Stack>
           );
-        },
-        meta: {
-          className: 'cell-center'
         }
       },
       {
         header: 'Actions',
         id: 'edit',
-        cell: (props) => <EditAction {...props} fetchBoggingEntries={fetchBoggingEntries} />,
+        cell: EditAction,
         meta: {
           className: 'cell-center'
         }
       }
     ],
-    [fetchBoggingEntries]
+    []
   );
 
   // Ensure consistent render order by checking loading status outside of the main return
-  if (loading) return <p>Loading...</p>;
+  //if (loading) return <p>Loading...</p>;
 
   return (
-    <div>
-      <MainCard sx={{ mb: 2 }} content={false}>
-        <CardContent>
-          <Typography variant="h5">{ringName}</Typography>
-          {/*           <Typography variant="body1" sx={{ textAlign: 'right', mt: 2 }}>
-            Adding stats here.
-          </Typography> */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">{stats.in_flow ? 'Flow' : 'Insitu'}</Typography>
-              <Typography variant="h6">Tonnes</Typography>
-              <Typography variant="body1">({stats.designed_tonnes}</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
-              <Typography variant="body1">x</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">Draw</Typography>
-              <Typography variant="h6">Ratio</Typography>
-              <Typography variant="body1">{stats.draw_percentage})</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
-              <Typography variant="body1">+</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">Draw</Typography>
-              <Typography variant="h6">Deviation</Typography>
-              <Typography variant="body1">{stats.draw_deviation}</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
-              <Typography variant="body1">+</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">Geology</Typography>
-              <Typography variant="h6">Overdraw</Typography>
-              <Typography variant="body1">{stats.overdraw_amount}</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
-              <Typography variant="body1">-</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">Bogged</Typography>
-              <Typography variant="h6">Tonnes</Typography>
-              <Typography variant="body1">{stats.bogged_tonnes}</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center', alignSelf: 'flex-end' }}>
-              <Typography variant="body1">=</Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h6">Remaining</Typography>
-              <Typography variant="h6">Tonnes</Typography>
-              <Typography variant="h5">
-                {Math.round(
-                  stats.designed_tonnes * stats.draw_percentage + stats.draw_deviation + stats.overdraw_amount - stats.bogged_tonnes
-                )}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </MainCard>
-
-      {/* Table */}
-      <Box sx={{ mt: 2 }}>
-        <ReactTable {...{ data, columns, setData }} />
-      </Box>
-    </div>
+    <MainCard title={oredrive} content={false} secondary={'Drilled Rings'}>
+      <ReactTable columns={columns} data={data} setData={setData} handleSelectOredrive={handleSelectOredrive} currentOredrive={oredrive} />
+    </MainCard>
   );
 }
 

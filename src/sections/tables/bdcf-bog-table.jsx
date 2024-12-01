@@ -214,8 +214,8 @@ export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
     setLoading(true);
     try {
       const response = await fetcher(`/prod-actual/bdcf/bog/${location_id}`);
-      setData(response.data);
-      setStats(response.stats);
+      setData(response.data.data);
+      setStats(response.data.stats);
     } catch (error) {
       console.error('Error fetching active rings list:', error);
     } finally {
