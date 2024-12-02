@@ -6,7 +6,7 @@ import { Box, Divider, Tab, Tabs, Typography } from '@mui/material';
 import Head from 'next/head';
 
 // Tabs
-import DupeUpload from './TabPMD';
+import TabPMD from './TabPMD';
 import FMUpdateUpload from './TabFMConcept';
 
 function TabPanel(props) {
@@ -62,7 +62,7 @@ export default function SettingsTabs() {
           <Typography variant="h5" gutterBottom>
             Production Management Database
           </Typography>
-          <DupeUpload />
+          <TabPMD />
         </TabPanel>
         <TabPanel value={value} index={1}>
           <FMUpdateUpload />
