@@ -305,7 +305,7 @@ function BDCFEntryDrillTab() {
                 <TableRow>
                   <TableCell>Date</TableCell>
                   <TableCell>Ring</TableCell>
-                  <TableCell>Tags</TableCell>
+                  <TableCell>Conditions</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
