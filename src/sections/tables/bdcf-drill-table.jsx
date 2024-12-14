@@ -259,7 +259,7 @@ export default function BDCFDrillTable({ oredrive, ringData, handleSelectOredriv
     () => [
       {
         header: 'Completion Date',
-        accessorKey: 'drill_complete_date',
+        accessorKey: 'drill_complete_shift',
         cell: (info) => info.getValue() || 'N/A' // Display "N/A" if no value
       },
       {

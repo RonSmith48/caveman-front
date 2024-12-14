@@ -51,7 +51,7 @@ function EditAction({ row, table }) {
     meta?.revertData(row.index, e?.currentTarget.name === 'cancel');
   };
 
-  const handleUndrill = async () => {
+  const handleUncharge = async () => {
     const location_id = row.original.location_id;
     const payload = {
       location_id: location_id,
@@ -135,8 +135,8 @@ function EditAction({ row, table }) {
           </Tooltip>
 
           {/* Delete Button (Only visible in edit mode) */}
-          <Tooltip title="Un-Drill">
-            <IconButton color="error" onClick={handleUndrill}>
+          <Tooltip title="Un-Charge">
+            <IconButton color="error" onClick={handleUncharge}>
               <DeleteOutlined />
             </IconButton>
           </Tooltip>
@@ -259,12 +259,17 @@ export default function BDCFChargeTable({ oredrive, ringData, handleSelectOredri
     () => [
       {
         header: 'Completion Date',
-        accessorKey: 'drill_complete_date',
+        accessorKey: 'charge_shift',
         cell: (info) => info.getValue() || 'N/A' // Display "N/A" if no value
       },
       {
         header: 'Ring',
         accessorKey: 'ring_number_txt',
+        cell: (info) => info.getValue()
+      },
+      {
+        header: 'Detonator',
+        accessorKey: 'detonator',
         cell: (info) => info.getValue()
       },
       {
