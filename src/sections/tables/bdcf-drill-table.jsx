@@ -143,7 +143,7 @@ function EditAction({ row, table }) {
         </>
       )}
 
-      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Edit'}>
+      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Make Correction'}>
         <IconButton
           color={meta?.selectedRow[row.id] ? 'success' : 'primary'}
           onClick={meta?.selectedRow[row.id] ? handleUpdate : setSelectedRow}
