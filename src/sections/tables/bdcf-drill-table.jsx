@@ -258,9 +258,9 @@ export default function BDCFDrillTable({ oredrive, ringData, handleSelectOredriv
   const columns = useMemo(
     () => [
       {
-        header: 'Completion Date',
+        header: 'Completed',
         accessorKey: 'drill_complete_shift',
-        cell: (info) => info.getValue() || 'N/A' // Display "N/A" if no value
+        cell: (info) => info.getValue() || '' // Display "N/A" if no value
       },
       {
         header: 'Ring',
