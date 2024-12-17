@@ -54,7 +54,6 @@ function BDCFEntryDrillTab() {
         setData(response.data);
         setDropdownOptions(response.data.designed_list);
         setLoading(false);
-        console.log(response);
       } catch (error) {
         console.error('Error fetching designed rings list:', error);
       } finally {
