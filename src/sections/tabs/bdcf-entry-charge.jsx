@@ -55,7 +55,7 @@ function BDCFEntryChargeTab() {
         setData(response.data);
         setDropdownOptions(response.data.drilled_drives_list);
         const detTypes = await fetcher('/settings/explosive-types-list');
-        if (detTypes){
+        if (detTypes) {
           setDetOptions(detTypes.data.value);
         }
         setLoading(false);
@@ -75,7 +75,7 @@ function BDCFEntryChargeTab() {
     selectOredrive: Yup.string().required('Ore drive is required'),
     selectRing: Yup.string().required('Ring is required'),
     comment: Yup.string(),
-    recharge: Yup.boolean(),
+    recharged: Yup.boolean(),
     incomplete: Yup.boolean(),
     charged_short: Yup.boolean(),
     blocked_holes: Yup.boolean(),
@@ -89,7 +89,7 @@ function BDCFEntryChargeTab() {
       selectOredrive: '',
       selectRing: '',
       comment: '',
-      recharge: isRecharge,
+      recharged: isRecharge,
       incomplete: false,
       charged_short: false,
       blocked_holes: false,
@@ -104,7 +104,7 @@ function BDCFEntryChargeTab() {
           shift: values.shift,
           location_id: values.selectRing, // Use selectRing as location_id
           comment: values.comment || null,
-          recharge: isRecharge,
+          recharged: isRecharge,
           incomplete: values.incomplete,
           charged_short: values.charged_short,
           blocked_holes: values.blocked_holes,
@@ -130,22 +130,64 @@ function BDCFEntryChargeTab() {
   });
 
   const handleIsRechargeToggle = () => {
+    const newIsRecharge = !isRecharge;
+
     formik.setFieldValue('selectOredrive', '');
     formik.setFieldValue('selectRing', '');
-    setIsRecharge(!isRecharge);
-    setDropdownOptions(isRecharge ? data.designed_list : data.drilled_list); // Toggle between lists
+    setIsRecharge(newIsRecharge);
+
+    if (newIsRecharge) {
+      // Uncheck blocked_holes when recharging
+      formik.setFieldValue('blocked_holes', false);
+    }
+
+    // Toggle dropdown options based on recharge state
+    setDropdownOptions(newIsRecharge ? data.drilled_list : data.designed_list);
   };
 
   const handleIncomplete = () => {
-    formik.setFieldValue('incomplete', !formik.values.incomplete);
+    const isIncomplete = !formik.values.incomplete;
+
+    formik.setFieldValue('incomplete', isIncomplete);
+    if (isIncomplete) {
+      if (formik.values.blocked_holes) {
+        formik.setFieldValue('blocked_holes', false);
+        // Clear comment if blocked_holes was checked
+        formik.setFieldValue('comment', '');
+      }
+    } else {
+      // Clear comment if incomplete is unchecked
+      formik.setFieldValue('comment', '');
+    }
   };
 
   const handleBlockedHoles = () => {
-    formik.setFieldValue('blocked_holes', !formik.values.blocked_holes);
+    const isBlockedHoles = !formik.values.blocked_holes;
+
+    formik.setFieldValue('blocked_holes', isBlockedHoles);
+    if (isBlockedHoles) {
+      // Uncheck other fields if blocked_holes is checked
+      formik.setFieldValue('incomplete', false);
+      formik.setFieldValue('charged_short', false);
+      setIsRecharge(false); // Uncheck recharged by resetting isRecharge
+    } else {
+      formik.setFieldValue('comment', '');
+    }
   };
 
   const handleChargedShort = () => {
-    formik.setFieldValue('charged_short', !formik.values.charged_short);
+    const isChargedShort = !formik.values.charged_short;
+
+    formik.setFieldValue('charged_short', isChargedShort);
+
+    if (isChargedShort) {
+      // Uncheck blocked_holes if charged_short is checked
+      if (formik.values.blocked_holes) {
+        formik.setFieldValue('blocked_holes', false);
+        // Clear comment if blocked_holes was checked
+        formik.setFieldValue('comment', '');
+      }
+    }
   };
 
   const handleSelectOredrive = async (event) => {
@@ -157,7 +199,6 @@ function BDCFEntryChargeTab() {
 
     try {
       const response = await fetcher(`/prod-actual/bdcf/charge/${lvl_od}/`);
-      console.log(response);
       const rings = isRecharge ? response.data.charged : response.data.drilled;
 
       setChargedRings(response.data.charged_rings);
@@ -179,7 +220,13 @@ function BDCFEntryChargeTab() {
 
   const isSubmitDisabled = () => {
     // Check required fields and conditionally disable button
-    return !(formik.values.selectOredrive && formik.values.selectRing && formik.values.explosive && (!formik.values.incomplete || formik.values.comment));
+    return !(
+      formik.values.selectOredrive &&
+      formik.values.selectRing &&
+      formik.values.explosive &&
+      (!formik.values.blocked_holes || formik.values.comment) &&
+      (!formik.values.incomplete || formik.values.comment)
+    );
   };
 
   return (
@@ -227,17 +274,15 @@ function BDCFEntryChargeTab() {
                     labelPlacement="end"
                   />
                   <FormControlLabel
-                    control={<Checkbox disabled />}
-                    label="Is Recharge"
+                    control={<Checkbox disabled checked={isRecharge} onChange={handleIsRechargeToggle} />}
+                    label="Is Recharged"
                     labelPlacement="end"
-                    onChange={handleIsRechargeToggle}
                   />
                 </Grid>
               </FormGroup>
             </FormControl>
 
-            {/* Conditionally render the Drilled Meters input */}
-            {formik.values.incomplete && (
+            {(formik.values.incomplete || formik.values.blocked_holes) && (
               <TextField
                 label="Comment"
                 name="comment"
@@ -247,6 +292,8 @@ function BDCFEntryChargeTab() {
                 error={formik.touched.comment && Boolean(formik.errors.comment)}
                 helperText={formik.touched.comment && formik.errors.comment}
                 fullWidth
+                multiline
+                rows={4}
               />
             )}
 
@@ -298,7 +345,6 @@ function BDCFEntryChargeTab() {
               )}
             </FormControl>
 
-
             <Button variant="contained" color="primary" type="submit" disabled={isSubmitDisabled()}>
               Process Ring
             </Button>
@@ -322,7 +368,7 @@ function BDCFEntryChargeTab() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Completion Date</TableCell>
+                  <TableCell>Completed</TableCell>
                   <TableCell>Ring</TableCell>
                   <TableCell>Detonator</TableCell>
                   <TableCell>Conditions</TableCell>

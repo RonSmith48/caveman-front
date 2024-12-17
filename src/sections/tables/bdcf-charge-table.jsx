@@ -31,6 +31,7 @@ import CSVExport from 'components/third-party/react-table/CSVExport';
 import RowEditable from './bog-RowEditable';
 import { fetcher, fetcherPut, fetcherPost } from 'utils/axios';
 import SvgAvatar from 'components/SvgAvatar';
+import { shkeyToShift } from 'utils/shkey';
 
 // assets
 import CloseOutlined from '@ant-design/icons/CloseOutlined';
@@ -53,19 +54,19 @@ function EditAction({ row, table }) {
 
   const handleUncharge = async () => {
     const location_id = row.original.location_id;
+
     const payload = {
       location_id: location_id,
-      date: null,
-      redrill: false,
-      lost_rods: false,
-      has_bg: false,
-      making_water: false,
-      status: 'Designed'
+      charge_shift: '',
+      conditions: [], // Clear all conditions
+      status: 'Drilled'
     };
+
     try {
-      const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
+      const response = await fetcherPost('/prod-actual/bdcf/charge/', payload);
       if (response.status === 200) {
-        enqueueSnackbar('Ring un-drilled successfully', { variant: 'success' });
+        enqueueSnackbar('Ring un-charged successfully', { variant: 'success' });
+
         if (meta?.handleSelectOredrive) {
           await meta.handleSelectOredrive({ target: { value: meta.currentOredrive } });
         }
@@ -92,18 +93,17 @@ function EditAction({ row, table }) {
       return;
     }
 
+    const conditions = updatedRow.conditions || []; // Ensure it's a list
+
     const payload = {
       location_id: updatedRow.location_id,
-      drill_complete_date: updatedRow.drill_complete_date,
-      redrill: updatedRow.is_redrilled,
-      lost_rods: updatedRow.has_lost_rods,
-      has_bg: updatedRow.has_bg_report,
-      making_water: updatedRow.is_making_water,
-      status: 'Drilled'
+      charge_shift: updatedRow.charge_shift,
+      conditions: conditions, // Transmit as a list
+      status: 'Charged'
     };
 
     try {
-      const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
+      const response = await fetcherPost('/prod-actual/bdcf/charge/', payload);
 
       if (response.status === 200) {
         enqueueSnackbar('Row updated successfully', { variant: 'success' });
@@ -143,7 +143,7 @@ function EditAction({ row, table }) {
         </>
       )}
 
-      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Edit'}>
+      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Make Correction'}>
         <IconButton
           color={meta?.selectedRow[row.id] ? 'success' : 'primary'}
           onClick={meta?.selectedRow[row.id] ? handleUpdate : setSelectedRow}
@@ -248,19 +248,39 @@ function ReactTable({ columns, data, setData, handleSelectOredrive, currentOredr
 export default function BDCFChargeTable({ oredrive, ringData, handleSelectOredrive }) {
   const [data, setData] = useState(ringData);
   const [loading, setLoading] = useState(true);
+  const [conditionsOptions, setConditionsOptions] = useState([]);
   const SM_AVATAR_SIZE = 32;
 
   useEffect(() => {
     setData(ringData); // Update table data when ringData changes
   }, [ringData]);
 
+  useEffect(() => {
+    const fetchConditions = async () => {
+      try {
+        const response = await fetcher(`/prod-actual/bdcf/conditions/Charged/`);
+        console.log(response.data);
+        setConditionsOptions(response.data);
+      } catch (error) {
+        console.error('Failed to fetch conditions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConditions();
+  }, []);
+
   // Memoize columns outside of any conditional statement
   const columns = useMemo(
     () => [
       {
-        header: 'Completion Date',
-        accessorKey: 'charge_shift',
-        cell: (info) => info.getValue() || 'N/A' // Display "N/A" if no value
+        header: 'Completed',
+        accessorKey: 'charge_shift', // Key from your data source
+        cell: (info) => {
+          const value = info.getValue();
+          // Format the value using shkeyToShift, or return an empty string if null/undefined
+          return value ? shkeyToShift(value) : '';
+        }
       },
       {
         header: 'Ring',
@@ -280,38 +300,18 @@ export default function BDCFChargeTable({ oredrive, ringData, handleSelectOredri
           const meta = info.table.options.meta;
           const isEditing = meta.selectedRow[info.row.id];
 
-          const conditions = [
-            { key: 'is_redrilled', label: 'Redrilled' },
-            { key: 'has_lost_rods', label: 'Lost Rods' },
-            { key: 'has_bg_report', label: 'BG Reported' },
-            { key: 'is_making_water', label: 'Making Water' }
-          ];
-
-          const selectedConditions = conditions.filter((cond) => row[cond.key]);
+          // Determine currently selected conditions
+          const selectedConditions = row.conditions || [];
 
           if (isEditing) {
             return (
               <Autocomplete
                 multiple
                 id={`autocomplete-${info.row.id}`}
-                options={conditions}
-                getOptionLabel={(option) => option.label}
-                value={selectedConditions} // Use controlled value
-                isOptionEqualToValue={(option, value) => option.key === value.key} // Custom equality check
+                options={conditionsOptions} // Array of strings
+                value={selectedConditions} // Selected conditions as strings
                 onChange={(event, newValue) => {
-                  // Map selected conditions to a key-value object
-                  const updatedConditions = conditions.reduce((acc, cond) => {
-                    acc[cond.key] = newValue.some((val) => val.key === cond.key);
-                    return acc;
-                  }, {});
-
-                  // Update the row's conditions
-                  meta.updateData(info.row.index, 'conditions', updatedConditions);
-
-                  // Update the individual keys in the row
-                  Object.keys(updatedConditions).forEach((key) => {
-                    meta.updateData(info.row.index, key, updatedConditions[key]);
-                  });
+                  meta.updateData(info.row.index, 'conditions', newValue);
                 }}
                 renderInput={(params) => <TextField {...params} placeholder="Select Conditions" />}
                 sx={{
@@ -336,7 +336,7 @@ export default function BDCFChargeTable({ oredrive, ringData, handleSelectOredri
           return (
             <Stack direction="row" flexWrap="wrap">
               {selectedConditions.map((cond) => (
-                <Chip key={cond.key} label={cond.label} variant="outlined" color="primary" size="small" sx={{ margin: '0 4px 4px 0' }} />
+                <Chip key={cond} label={cond} variant="outlined" color="primary" size="small" sx={{ margin: '0 4px 4px 0' }} />
               ))}
             </Stack>
           );
@@ -351,14 +351,13 @@ export default function BDCFChargeTable({ oredrive, ringData, handleSelectOredri
         }
       }
     ],
-    []
+    [conditionsOptions] // Dependencies for memoization
   );
 
-  // Ensure consistent render order by checking loading status outside of the main return
-  //if (loading) return <p>Loading...</p>;
+  if (loading) return <p>Loading...</p>;
 
   return (
-    <MainCard title={oredrive} content={false} secondary={'Drilled Rings'}>
+    <MainCard title={oredrive} content={false} secondary={'Charged Rings'}>
       <ReactTable columns={columns} data={data} setData={setData} handleSelectOredrive={handleSelectOredrive} currentOredrive={oredrive} />
     </MainCard>
   );
