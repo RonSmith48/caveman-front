@@ -53,15 +53,14 @@ function EditAction({ row, table }) {
 
   const handleUndrill = async () => {
     const location_id = row.original.location_id;
+
     const payload = {
       location_id: location_id,
       date: null,
-      redrill: false,
-      lost_rods: false,
-      has_bg: false,
-      making_water: false,
+      conditions: [],
       status: 'Designed'
     };
+
     try {
       const response = await fetcherPost('/prod-actual/bdcf/drill/', payload);
       if (response.status === 200) {
@@ -143,7 +142,7 @@ function EditAction({ row, table }) {
         </>
       )}
 
-      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Make Correction'}>
+      <Tooltip title={meta?.selectedRow[row.id] ? 'Save' : 'Update'}>
         <IconButton
           color={meta?.selectedRow[row.id] ? 'success' : 'primary'}
           onClick={meta?.selectedRow[row.id] ? handleUpdate : setSelectedRow}
@@ -248,11 +247,27 @@ function ReactTable({ columns, data, setData, handleSelectOredrive, currentOredr
 export default function BDCFDrillTable({ oredrive, ringData, handleSelectOredrive }) {
   const [data, setData] = useState(ringData);
   const [loading, setLoading] = useState(true);
+  const [conditionsOptions, setConditionsOptions] = useState([]);
   const SM_AVATAR_SIZE = 32;
 
   useEffect(() => {
     setData(ringData); // Update table data when ringData changes
   }, [ringData]);
+
+  useEffect(() => {
+    const fetchConditions = async () => {
+      try {
+        const response = await fetcher(`/prod-actual/bdcf/conditions/Drilled/`);
+        console.log(response.data);
+        setConditionsOptions(response.data);
+      } catch (error) {
+        console.error('Failed to fetch conditions:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConditions();
+  }, []);
 
   // Memoize columns outside of any conditional statement
   const columns = useMemo(
@@ -275,38 +290,20 @@ export default function BDCFDrillTable({ oredrive, ringData, handleSelectOredriv
           const meta = info.table.options.meta;
           const isEditing = meta.selectedRow[info.row.id];
 
-          const conditions = [
-            { key: 'is_redrilled', label: 'Redrilled' },
-            { key: 'has_lost_rods', label: 'Lost Rods' },
-            { key: 'has_bg_report', label: 'BG Reported' },
-            { key: 'is_making_water', label: 'Making Water' }
-          ];
-
-          const selectedConditions = conditions.filter((cond) => row[cond.key]);
+          const selectedConditions = row.conditions || [];
 
           if (isEditing) {
             return (
               <Autocomplete
                 multiple
                 id={`autocomplete-${info.row.id}`}
-                options={conditions}
-                getOptionLabel={(option) => option.label}
-                value={selectedConditions} // Use controlled value
-                isOptionEqualToValue={(option, value) => option.key === value.key} // Custom equality check
+                options={conditionsOptions} // Array of strings
+                getOptionLabel={(option) => option} // Directly use the string as the label
+                value={selectedConditions} // Array of strings for the selected conditions
+                isOptionEqualToValue={(option, value) => option === value} // Compare strings directly
                 onChange={(event, newValue) => {
-                  // Map selected conditions to a key-value object
-                  const updatedConditions = conditions.reduce((acc, cond) => {
-                    acc[cond.key] = newValue.some((val) => val.key === cond.key);
-                    return acc;
-                  }, {});
-
-                  // Update the row's conditions
-                  meta.updateData(info.row.index, 'conditions', updatedConditions);
-
-                  // Update the individual keys in the row
-                  Object.keys(updatedConditions).forEach((key) => {
-                    meta.updateData(info.row.index, key, updatedConditions[key]);
-                  });
+                  // Update the row's conditions with the new value (array of strings)
+                  meta.updateData(info.row.index, 'conditions', newValue);
                 }}
                 renderInput={(params) => <TextField {...params} placeholder="Select Conditions" />}
                 sx={{

@@ -70,11 +70,7 @@ function BDCFEntryDrillTab() {
     selectOredrive: Yup.string().required('Ore drive is required'),
     selectRing: Yup.string().required('Ring is required'),
     drilled_mtrs: Yup.number(),
-    redrill: Yup.boolean(),
-    half_drilled: Yup.boolean(),
-    lost_rods: Yup.boolean(),
-    has_bg: Yup.boolean(),
-    making_water: Yup.boolean()
+    conditions: Yup.array().of(Yup.string())
   });
 
   const formik = useFormik({

@@ -75,10 +75,7 @@ function BDCFEntryChargeTab() {
     selectOredrive: Yup.string().required('Ore drive is required'),
     selectRing: Yup.string().required('Ring is required'),
     comment: Yup.string(),
-    recharged: Yup.boolean(),
-    incomplete: Yup.boolean(),
-    charged_short: Yup.boolean(),
-    blocked_holes: Yup.boolean(),
+    conditions: Yup.array().of(Yup.string()),
     explosive: Yup.string().required('Explosive type is required')
   });
 
@@ -99,15 +96,20 @@ function BDCFEntryChargeTab() {
     onSubmit: async (values) => {
       try {
         const formattedDate = formatDate(values.pickerDate);
+
+        // Construct the conditions list
+        const conditions = [];
+        if (values.recharged) conditions.push('Recharged Holes');
+        if (values.incomplete) conditions.push('Incomplete');
+        if (values.charged_short) conditions.push('Charged Short');
+        if (values.blocked_holes) conditions.push('Blocked Holes');
+
         const payload = {
           date: formattedDate,
           shift: values.shift,
           location_id: values.selectRing, // Use selectRing as location_id
           comment: values.comment || null,
-          recharged: isRecharge,
-          incomplete: values.incomplete,
-          charged_short: values.charged_short,
-          blocked_holes: values.blocked_holes,
+          conditions: conditions, // Send conditions as a list
           status: 'Charged',
           explosive: values.explosive
         };
@@ -169,6 +171,7 @@ function BDCFEntryChargeTab() {
       // Uncheck other fields if blocked_holes is checked
       formik.setFieldValue('incomplete', false);
       formik.setFieldValue('charged_short', false);
+      formik.setFieldValue('explosive', '');
       setIsRecharge(false); // Uncheck recharged by resetting isRecharge
     } else {
       formik.setFieldValue('comment', '');
@@ -219,14 +222,19 @@ function BDCFEntryChargeTab() {
   };
 
   const isSubmitDisabled = () => {
-    // Check required fields and conditionally disable button
-    return !(
-      formik.values.selectOredrive &&
-      formik.values.selectRing &&
-      formik.values.explosive &&
-      (!formik.values.blocked_holes || formik.values.comment) &&
-      (!formik.values.incomplete || formik.values.comment)
-    );
+    const { selectOredrive, selectRing, explosive, blocked_holes, incomplete, comment } = formik.values;
+
+    // Check if mandatory fields are filled
+    const mandatoryFieldsFilled = selectOredrive && selectRing;
+
+    // Check if explosive is required and valid
+    const explosiveValid = blocked_holes || explosive;
+
+    // Check if blocked_holes or incomplete require a comment
+    const commentValid = (!blocked_holes && !incomplete) || comment;
+
+    // Return the final condition
+    return !(mandatoryFieldsFilled && explosiveValid && commentValid);
   };
 
   return (
@@ -282,7 +290,7 @@ function BDCFEntryChargeTab() {
               </FormGroup>
             </FormControl>
 
-            {(formik.values.incomplete || formik.values.blocked_holes) && (
+            {(formik.values.incomplete || formik.values.blocked_holes || formik.values.charged_short) && (
               <TextField
                 label="Comment"
                 name="comment"
