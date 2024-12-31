@@ -88,7 +88,9 @@ function FMFileHeadersSettingsForm() {
             draw_zone: headers?.draw_zone || '',
             density: headers?.density || '',
             au: headers?.au || '',
-            cu: headers?.cu || ''
+            cu: headers?.cu || '',
+            predecessors: headers?.predecessors || '',
+            successors: headers?.successors || ''
           }}
           validationSchema={Yup.object().shape({
             id: Yup.string().max(50).required('This is a required field.'),
@@ -104,7 +106,9 @@ function FMFileHeadersSettingsForm() {
             draw_zone: Yup.string().max(50).required('This is a required field.'),
             density: Yup.string().max(50).required('This is a required field.'),
             au: Yup.string().max(50).required('This is a required field.'),
-            cu: Yup.string().max(50).required('This is a required field.')
+            cu: Yup.string().max(50).required('This is a required field.'),
+            predecessors: Yup.string().max(50).required('This is a required field.'),
+            successors: Yup.string().max(50).required('This is a required field.')
           })}
           onSubmit={(values, { setErrors, setStatus, setSubmitting }) => {
             setSubmitting(true);
@@ -124,7 +128,7 @@ function FMFileHeadersSettingsForm() {
           {({ errors, handleBlur, handleChange, handleSubmit, isSubmitting, touched, values }) => (
             <Box component="form" noValidate onSubmit={handleSubmit}>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>ID :</InputLabel>
@@ -139,7 +143,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Level :</InputLabel>
@@ -161,7 +165,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Heading :</InputLabel>
@@ -183,7 +187,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Drive :</InputLabel>
@@ -205,7 +209,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Name :</InputLabel>
@@ -220,7 +224,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Loc :</InputLabel>
@@ -235,7 +239,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>X :</InputLabel>
@@ -250,7 +254,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Y :</InputLabel>
@@ -265,7 +269,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Z :</InputLabel>
@@ -280,29 +284,8 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
-                  <Grid container spacing={2} alignItems="center">
-                    <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
-                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Tonnes :</InputLabel>
-                    </Grid>
-                    <Grid item xs={12} sm={9} lg={8}>
-                      <TextField
-                        fullWidth
-                        id="headers-tonnes"
-                        value={values.tonnes}
-                        name="tonnes"
-                        onBlur={handleBlur}
-                        onChange={handleChange}
-                      />
-                      {touched.tonnes && errors.tonnes && (
-                        <FormHelperText error id="headers-tonnes-helper">
-                          {errors.tonnes}
-                        </FormHelperText>
-                      )}
-                    </Grid>
-                  </Grid>
-                </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Draw :</InputLabel>
@@ -324,7 +307,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Density :</InputLabel>
@@ -346,7 +329,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Au :</InputLabel>
@@ -361,7 +344,7 @@ function FMFileHeadersSettingsForm() {
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid item xs={12} sm={6} lg={4}>
+                <Grid item xs={12} sm={8} lg={6}>
                   <Grid container spacing={2} alignItems="center">
                     <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
                       <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Cu :</InputLabel>
@@ -371,6 +354,72 @@ function FMFileHeadersSettingsForm() {
                       {touched.cu && errors.cu && (
                         <FormHelperText error id="headers-cu-helper">
                           {errors.cu}
+                        </FormHelperText>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} sm={8} lg={6}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Tonnes :</InputLabel>
+                    </Grid>
+                    <Grid item xs={12} sm={9} lg={8}>
+                      <TextField
+                        fullWidth
+                        id="headers-tonnes"
+                        value={values.tonnes}
+                        name="tonnes"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                      />
+                      {touched.tonnes && errors.tonnes && (
+                        <FormHelperText error id="headers-tonnes-helper">
+                          {errors.tonnes}
+                        </FormHelperText>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} sm={8} lg={6}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Predecessors :</InputLabel>
+                    </Grid>
+                    <Grid item xs={12} sm={9} lg={8}>
+                      <TextField
+                        fullWidth
+                        id="headers-predecessors"
+                        value={values.predecessors}
+                        name="predecessors"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                      />
+                      {touched.predecessors && errors.predecessors && (
+                        <FormHelperText error id="headers-predecessors-helper">
+                          {errors.predecessors}
+                        </FormHelperText>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Grid>
+                <Grid item xs={12} sm={8} lg={6}>
+                  <Grid container spacing={2} alignItems="center">
+                    <Grid item xs={12} sm={3} lg={4} sx={{ pt: { xs: 2, sm: '0 !important' } }}>
+                      <InputLabel sx={{ textAlign: { xs: 'left', sm: 'right' } }}>Successors :</InputLabel>
+                    </Grid>
+                    <Grid item xs={12} sm={9} lg={8}>
+                      <TextField
+                        fullWidth
+                        id="headers-successors"
+                        value={values.successors}
+                        name="successors"
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                      />
+                      {touched.successors && errors.successors && (
+                        <FormHelperText error id="headers-successors-helper">
+                          {errors.successors}
                         </FormHelperText>
                       )}
                     </Grid>
