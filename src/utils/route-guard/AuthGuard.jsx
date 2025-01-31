@@ -2,9 +2,8 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { jwtDecode } from 'jwt-decode'; // Correct way to import
 import Loader from 'components/Loader';
-
-// ==============================|| AUTH GUARD ||============================== //
 
 export default function AuthGuard({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,19 +12,39 @@ export default function AuthGuard({ children }) {
 
   useEffect(() => {
     const checkAuthentication = async () => {
-      // Check if access token exists in localStorage
       const accessToken = localStorage.getItem('accessToken');
 
       if (!accessToken) {
-        // No access token found, redirect to login with callback URL
-        const currentPath = encodeURIComponent(window.location.pathname); // Get current page
-        router.push(`/login?callbackUrl=${currentPath}`); // Redirect to login with the callback
-      } else {
-        // If access token exists, user is authenticated
-        setIsAuthenticated(true);
+        redirectToLogin();
+        return;
       }
 
-      setIsLoading(false); // End the loading state
+      try {
+        // Decode token to check expiration
+        const decodedToken = jwtDecode(accessToken);
+        const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+
+        if (decodedToken.exp && decodedToken.exp < currentTime) {
+          // Token expired, remove it and redirect
+          localStorage.removeItem('accessToken');
+          redirectToLogin();
+          return;
+        }
+
+        // Token is valid
+        setIsAuthenticated(true);
+      } catch (error) {
+        // Error decoding token (possible invalid token format)
+        localStorage.removeItem('accessToken');
+        redirectToLogin();
+      }
+
+      setIsLoading(false);
+    };
+
+    const redirectToLogin = () => {
+      const currentPath = encodeURIComponent(window.location.pathname);
+      router.push(`/login?callbackUrl=${currentPath}`);
     };
 
     checkAuthentication();
@@ -33,7 +52,6 @@ export default function AuthGuard({ children }) {
 
   if (isLoading) return <Loader />;
 
-  // Render children only if authenticated
   return isAuthenticated ? children : null;
 }
 
