@@ -2,7 +2,7 @@
 import PropTypes from 'prop-types';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode'; // Correct way to import
+import axiosServices from 'utils/axios';
 import Loader from 'components/Loader';
 
 export default function AuthGuard({ children }) {
@@ -13,30 +13,20 @@ export default function AuthGuard({ children }) {
   useEffect(() => {
     const checkAuthentication = async () => {
       const accessToken = localStorage.getItem('accessToken');
-
       if (!accessToken) {
         redirectToLogin();
         return;
       }
 
       try {
-        // Decode token to check expiration
-        const decodedToken = jwtDecode(accessToken);
-        const currentTime = Math.floor(Date.now() / 1000); // Convert to seconds
+        // Make an authenticated request to verify token validity
+        await axiosServices.get('/users/token-verify/');
 
-        if (decodedToken.exp && decodedToken.exp < currentTime) {
-          // Token expired, remove it and redirect
-          localStorage.removeItem('accessToken');
-          redirectToLogin();
-          return;
-        }
-
-        // Token is valid
+        // If the request succeeds, the token is valid
         setIsAuthenticated(true);
       } catch (error) {
-        // Error decoding token (possible invalid token format)
-        localStorage.removeItem('accessToken');
-        redirectToLogin();
+        console.log('Auth verification failed:', error);
+        // axiosServices handles token refresh & redirect automatically
       }
 
       setIsLoading(false);
