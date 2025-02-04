@@ -47,18 +47,21 @@ function BDCFEntryChargeTab() {
   const [chargedRings, setChargedRings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRings, setLoadingRings] = useState(false);
+  const [oredriveValue, setOredriveValue] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetcher('/prod-actual/bdcf/charge/');
-        setData(response.data);
-        setDropdownOptions(response.data.drilled_drives_list);
-        const detTypes = await fetcher('/settings/explosive-types-list');
+        const [chargeResponse, detTypes] = await Promise.all([
+          fetcher('/prod-actual/bdcf/charge/'),
+          fetcher('/settings/explosive-types-list/')
+        ]);
+
+        setData(chargeResponse.data);
+        setDropdownOptions(chargeResponse.data.drilled_drives_list);
         if (detTypes) {
           setDetOptions(detTypes.data.value);
         }
-        setLoading(false);
       } catch (error) {
         console.error('Error fetching designed rings list:', error);
       } finally {
@@ -203,7 +206,6 @@ function BDCFEntryChargeTab() {
     try {
       const response = await fetcher(`/prod-actual/bdcf/charge/${lvl_od}/`);
       const rings = isRecharge ? response.data.charged : response.data.drilled;
-
       setChargedRings(response.data.charged_rings);
       setRingNumDrop(rings);
       setChargedRings(response.data.charged_rings || []);
