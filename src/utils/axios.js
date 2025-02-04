@@ -7,7 +7,6 @@ axiosServices.interceptors.request.use(
   async (config) => {
     if (typeof window !== 'undefined') {
       const accessToken = localStorage.getItem('accessToken');
-      console.log('sending access token', accessToken); //=============
 
       if (accessToken) {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
@@ -25,7 +24,6 @@ axiosServices.interceptors.response.use(
   (response) => response, // Return successful response
   async (error) => {
     const originalRequest = error.config;
-    console.log('original request', originalRequest); //=============
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
