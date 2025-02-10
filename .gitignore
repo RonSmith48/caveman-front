@@ -3,12 +3,15 @@
 # dependencies
 /node_modules
 /.pnp
+/.yarn
+.yarn/*
 .pnp.js
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+yarn.lock
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
