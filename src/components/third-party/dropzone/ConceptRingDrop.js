@@ -166,7 +166,7 @@ const SingleFileUpload = ({ error, file, sx }) => {
               const tonnesValue = parseFloat(row[expectedHeaders['tonnes']]);
               if (tonnesValue >= 100000) {
                 errors.push(`Row ${index + 2}: Modelled tonnes over 99999.99 tonnes.`);
-              } else if (tonnesValue > 10000) {
+              } else if (tonnesValue > 100000) {
                 enqueueSnackbar(`Row ${index + 2}: Modelled tonnes greater than 10,000 tonnes`, { variant: 'warning' });
               }
 
