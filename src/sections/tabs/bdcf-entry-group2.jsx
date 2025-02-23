@@ -178,7 +178,7 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
                       <TableCell>
                         <Chip
                           label={ring.in_flow ? 'Yes' : 'No'}
-                          color={ring.in_flow ? 'success' : 'info'}
+                          color={ring.in_flow ? 'warning' : 'success'}
                           variant="outlined"
                           sx={{ fontWeight: 'bold' }}
                         />
@@ -232,7 +232,9 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
           // Compute the running total and remaining balance:
           const total = values.entries.reduce((sum, entry) => sum + (Number(entry[values.splitType]) || 0), 0);
           const remaining =
-            values.splitType === 'tonnes' ? (agData?.aggregate?.designed_tonnes ?? 0) - total : (agData?.aggregate?.volume ?? 0) - total;
+            values.splitType === 'tonnes'
+              ? parseFloat(((agData?.aggregate?.designed_tonnes ?? 0) - total).toFixed(1))
+              : parseFloat(((agData?.aggregate?.volume ?? 0) - total).toFixed(2));
 
           return (
             <Form>
@@ -333,8 +335,9 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
                                   {...field}
                                   onChange={(e) => {
                                     const value = e.target.value;
-                                    // Ensure the input is only positive numbers or empty
-                                    if (/^\d*\.?\d*$/.test(value)) {
+
+                                    // Allow only numbers and decimals, preventing multiple dots
+                                    if (/^\d*\.?\d*$/.test(value) || value === '') {
                                       field.onChange(e); // Allow valid value
                                     }
                                   }}
@@ -343,7 +346,7 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
                                       e.preventDefault(); // Prevent typing '-' or 'e'
                                     }
                                   }}
-                                  inputProps={{ min: 0 }} // Prevents negatives with UI controls
+                                  inputProps={{ min: 0, step: values.splitType === 'tonnes' ? 0.1 : 0.01 }} // Adjust step size dynamically
                                   error={meta.touched && Boolean(meta.error)}
                                   helperText={meta.touched && meta.error}
                                 />
@@ -450,6 +453,7 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
         <DialogTitle>How it Works</DialogTitle>
         <DialogContent>
           <p>How it works goes here</p>
+          <p>Dont forget to mention what happens when working with flow tonnes.</p>
         </DialogContent>
       </Dialog>
     </MainCard>
