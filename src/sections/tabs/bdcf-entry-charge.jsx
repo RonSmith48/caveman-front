@@ -64,6 +64,7 @@ function BDCFEntryChargeTab() {
         }
       } catch (error) {
         console.error('Error fetching designed rings list:', error);
+        enqueueSnackbar('Check explosive list types', {variant:'error'})
       } finally {
         setLoading(false);
       }
