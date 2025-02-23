@@ -13,20 +13,33 @@ export default function AuthGuard({ children }) {
   useEffect(() => {
     const checkAuthentication = async () => {
       const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+
       if (!accessToken) {
-        redirectToLogin();
-        return;
-      }
+        if (!refreshToken) {
+          redirectToLogin();
+          return;
+        }
 
-      try {
-        // Make an authenticated request to verify token validity
-        await axiosServices.get('/users/token-verify/');
+        try {
+          // Attempt to refresh the token
+          const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}users/token-refresh/`, {
+            refresh: refreshToken
+          });
 
-        // If the request succeeds, the token is valid
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.log('Auth verification failed:', error);
-        // axiosServices handles token refresh & redirect automatically
+          localStorage.setItem('accessToken', data.access);
+          setIsAuthenticated(true);
+        } catch (refreshError) {
+          console.log('Refresh token expired:', refreshError);
+          redirectToLogin();
+        }
+      } else {
+        try {
+          await axiosServices.get('/users/token-verify/');
+          setIsAuthenticated(true);
+        } catch (error) {
+          console.log('Auth verification failed:', error);
+        }
       }
 
       setIsLoading(false);
