@@ -36,6 +36,7 @@ import MainCard from 'components/MainCard';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import SvgAvatar from 'components/SvgAvatar';
+import InspectionDialog from 'components/modal/InspectFireGroupDialog';
 
 const BDCFExistingGroups = () => {
   const [openHelp, setOpenHelp] = useState(false);
@@ -149,31 +150,7 @@ const BDCFExistingGroups = () => {
       </Dialog>
 
       {/* Inspect Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullScreen>
-        <DialogTitle>Inspection Details</DialogTitle>
-        <DialogContent>
-          {selectedRow && (
-            <>
-              <Typography variant="h6">Level: {selectedRow.level}</Typography>
-              <Typography variant="subtitle1">Contributor: {selectedRow.contributor.full_name}</Typography>
-              <Typography variant="subtitle1">Pooled Rings:</Typography>
-              <ul>
-                {selectedRow.pooled_rings?.rings.map((ring) => (
-                  <li key={ring.location_id}>{ring.alias}</li>
-                ))}
-              </ul>
-              <Typography variant="subtitle1">Group Rings:</Typography>
-              <ul>
-                {selectedRow.group_rings.map((ring) => (
-                  <li key={ring.location_id}>
-                    {ring.alias} - {ring.status}
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <InspectionDialog open={openDialog} onClose={() => setOpenDialog(false)} selectedRow={selectedRow} />
     </MainCard>
   );
 };
