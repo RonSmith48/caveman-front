@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 // material-ui
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
@@ -46,6 +46,7 @@ function BDCFEntryDrillTab() {
   const [drilledRings, setDrilledRings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRings, setLoadingRings] = useState(false);
+  const audioRef = useRef(new Audio('/assets/sounds/052168_explosion.mp3'));
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +90,9 @@ function BDCFEntryDrillTab() {
     validationSchema,
     onSubmit: async (values) => {
       try {
+        audioRef.current.currentTime = 0;
+        audioRef.current.play();
+
         const formattedDate = formatDate(values.pickerDate);
         const payload = {
           date: formattedDate,
