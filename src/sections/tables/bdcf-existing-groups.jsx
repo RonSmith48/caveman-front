@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Formik, Form, Field } from 'formik';
 import {
   Autocomplete,
@@ -46,20 +46,19 @@ const BDCFExistingGroups = () => {
   const [loading, setLoading] = useState([true]);
   const SM_AVATAR_SIZE = 32;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetcher('/prod-actual/bdcf/groups/existing/');
-        setGroups(response.data);
-        console.log(response.data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching designed rings list:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const response = await fetcher('/prod-actual/bdcf/groups/existing/');
+      setGroups(response.data);
+    } catch (error) {
+      console.error('Error fetching designed rings list:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -133,7 +132,7 @@ const BDCFExistingGroups = () => {
             ) : (
               <TableRow>
                 <TableCell colSpan={5} align="center">
-                  {loading ? 'Loading...' : 'No data available'}
+                  {loading ? 'Loading...' : 'No active groups'}
                 </TableCell>
               </TableRow>
             )}
@@ -150,7 +149,9 @@ const BDCFExistingGroups = () => {
       </Dialog>
 
       {/* Inspect Dialog */}
-      <InspectionDialog open={openDialog} onClose={() => setOpenDialog(false)} selectedRow={selectedRow} />
+      {selectedRow && (
+        <InspectionDialog open={openDialog} onClose={() => setOpenDialog(false)} selectedRow={selectedRow} refresh={fetchData} />
+      )}
     </MainCard>
   );
 };

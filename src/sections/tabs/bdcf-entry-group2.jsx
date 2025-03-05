@@ -39,7 +39,7 @@ import { enqueueSnackbar } from 'notistack';
 import { Formik, Field, FieldArray, Form } from 'formik';
 import * as Yup from 'yup';
 
-const BDCFDefineGroups = ({ resetForm, agData }) => {
+const BDCFDefineGroups = ({ resetForm, agData, setAgData }) => {
   // Local UI state (for the Help and Reference dialogs)
   const [openHelp, setOpenHelp] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
@@ -108,6 +108,7 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
       // Reset form only on success
       if (resetForm) resetForm();
       formikReset();
+      if (setAgData) setAgData(null);
     } catch (error) {
       console.error('Error fetching rings:', error);
       enqueueSnackbar('Error fetching rings', { variant: 'error' });
@@ -277,7 +278,7 @@ const BDCFDefineGroups = ({ resetForm, agData }) => {
                           <Grid item>
                             <Field name={`entries.${index}.oredrive`}>
                               {({ field }) =>
-                                agData.form_elements.oredrive.length > 1 ? (
+                                agData?.form_elements.oredrive.length > 1 ? (
                                   <TextField
                                     select
                                     label="Ore Drive"

@@ -120,6 +120,7 @@ const BDCFEntryGroupTab = () => {
               ring: []
             }}
             validationSchema={validationSchema}
+            validateOnMount={true}
             onSubmit={async (values) => {
               const payload = {
                 create_from: values.createFrom,
@@ -224,7 +225,7 @@ const BDCFEntryGroupTab = () => {
       </Grid>
       <Grid item xs={12} md={8}>
         <Stack spacing={2}>
-          <BDCFDefineGroups resetForm={resetForm} agData={agResponseData} />
+          <BDCFDefineGroups resetForm={resetForm} agData={agResponseData} setAgData={setAgResponseData} />
           <BDCFExistingGroups />
         </Stack>
       </Grid>
