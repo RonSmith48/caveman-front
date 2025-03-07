@@ -70,7 +70,6 @@ function EditAction({ row, table, fetchBoggingEntries }) {
     const rowId = row.original.id;
     const updatedTonnes = row.original.tonnes; // Assume tonnes is being edited
 
-    console.log('handling update', updatedTonnes); //================
     try {
       const response = await fetcherPut(`/prod-actual/bdcf/bog/${rowId}/`, { tonnes: updatedTonnes });
       if (response.status === 200) {
@@ -366,9 +365,10 @@ export default function BDCFBogTable({ location_id, ringName, refreshKey }) {
               <Typography variant="h6">Remaining</Typography>
               <Typography variant="h6">Tonnes</Typography>
               <Typography variant="h5">
-                {Math.round(
+                {/* {Math.round(
                   stats.designed_tonnes * stats.draw_percentage + stats.draw_deviation + stats.overdraw_amount - stats.bogged_tonnes
-                )}
+                )} */}
+                {stats.remaining}
               </Typography>
             </Box>
           </Box>

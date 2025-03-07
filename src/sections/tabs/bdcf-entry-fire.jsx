@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react';
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import {
-  Autocomplete,
   Box,
   Checkbox,
   Grid,
@@ -38,37 +37,23 @@ import { enqueueSnackbar } from 'notistack';
 
 // project imports
 import { fetcher, fetcherPost } from 'utils/axios';
-import BDCFChargeTable from 'sections/tables/bdcf-charge-table';
+import BDCFFireTable from 'sections/tables/bdcf-fire-table';
 
 function BDCFEntryFireTab() {
-  const [data, setData] = useState({ drilled_list: [], designed_list: [] });
-  const [dropdownOptions, setDropdownOptions] = useState([]);
-  const [levels, setLevels] = useState([]);
-  const [detOptions, setDetOptions] = useState([]);
-  const [ringNumDrop, setRingNumDrop] = useState([]);
-  const [isRecharge, setIsRecharge] = useState(false);
-  const [chargedRings, setChargedRings] = useState([]);
-  const [rings, setRings] = useState([]);
+  const [levelOptions, setLevelOptions] = useState([]);
+  const [driveRingOptions, setdriveRingOptions] = useState([]);
+  const [firedRings, setFiredRings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRings, setLoadingRings] = useState(false);
-  const [oredriveValue, setOredriveValue] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [chargeResponse, detTypes] = await Promise.all([
-          fetcher('/prod-actual/bdcf/charge/'),
-          fetcher('/settings/explosive-types-list/')
-        ]);
-
-        setData(chargeResponse.data);
-        setDropdownOptions(chargeResponse.data.drilled_drives_list);
-        if (detTypes) {
-          setDetOptions(detTypes.data.value);
-        }
+        const fireResponse = await fetcher('/prod-actual/bdcf/fire/');
+        setLevelOptions(fireResponse.data);
       } catch (error) {
-        console.error('Error fetching designed rings list:', error);
-        enqueueSnackbar('Check explosive list types', { variant: 'error' });
+        console.error('Error fetching charged rings list:', error);
+        enqueueSnackbar('Error fetching levels containing charged rings', { variant: 'error' });
       } finally {
         setLoading(false);
       }
@@ -79,58 +64,36 @@ function BDCFEntryFireTab() {
 
   const validationSchema = Yup.object().shape({
     pickerDate: Yup.date().required('Date is required'),
-    shift: Yup.string().required('Shift is required'),
-    selectOredrive: Yup.string().required('Ore drive is required'),
-    selectRing: Yup.string().required('Ring is required'),
-    comment: Yup.string(),
-    conditions: Yup.array().of(Yup.string()),
-    explosive: Yup.string().required('Explosive type is required')
+    shift: Yup.string().required('Shift is required')
   });
 
   const formik = useFormik({
     initialValues: {
       pickerDate: dayjs().subtract(1, 'day'),
       shift: 'Day',
-      selectOredrive: '',
-      selectRing: '',
-      comment: '',
-      recharged: isRecharge,
-      incomplete: false,
-      charged_short: false,
-      blocked_holes: false,
-      explosive: ''
+      selectLevel: '',
+      selectRing: ''
     },
     validationSchema,
     onSubmit: async (values) => {
       try {
         const formattedDate = formatDate(values.pickerDate);
 
-        // Construct the conditions list
-        const conditions = [];
-        if (values.recharged) conditions.push('Recharged Holes');
-        if (values.incomplete) conditions.push('Incomplete');
-        if (values.charged_short) conditions.push('Charged Short');
-        if (values.blocked_holes) conditions.push('Blocked Holes');
-
         const payload = {
           date: formattedDate,
           shift: values.shift,
-          location_id: values.selectRing, // Use selectRing as location_id
-          comment: values.comment || null,
-          conditions: conditions, // Send conditions as a list
-          status: 'Charged',
-          explosive: values.explosive
+          location_id: values.selectRing // Use selectRing as location_id
         };
 
-        const response = await fetcherPost('/prod-actual/bdcf/charge/', payload);
+        const response = await fetcherPost('/prod-actual/bdcf/fire/', payload);
 
         enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
 
         // Optionally reset the form or refetch data
         formik.resetForm();
-        const currentOredrive = values.selectOredrive; // Get the current oredrive
-        if (currentOredrive) {
-          await handleSelectOredrive({ target: { value: currentOredrive } }); // Refetch rings for the current oredrive
+        const currentLevel = values.selectLevel; // Get the current oredrive
+        if (currentLevel) {
+          await handleSelectLevel({ target: { value: currentLevel } }); // Refetch rings for the current oredrive
         }
       } catch (error) {
         console.error('Error processing ring:', error);
@@ -139,19 +102,17 @@ function BDCFEntryFireTab() {
     }
   });
 
-  const handleSelectOredrive = async (event) => {
-    const lvl_od = event.target.value;
-    formik.setFieldValue('selectOredrive', lvl_od);
+  const handleSelectLevel = async (event) => {
+    const lvl = event.target.value;
+    formik.setFieldValue('selectLevel', lvl);
     formik.setFieldValue('selectRing', '');
 
     setLoadingRings(true);
 
     try {
-      const response = await fetcher(`/prod-actual/bdcf/charge/${lvl_od}/`);
-      const rings = isRecharge ? response.data.charged : response.data.drilled;
-      setChargedRings(response.data.charged_rings);
-      setRingNumDrop(rings);
-      setChargedRings(response.data.charged_rings || []);
+      const response = await fetcher(`/prod-actual/bdcf/fire/${lvl}/`);
+      setFiredRings(response.data.fired_rings || []);
+      setdriveRingOptions(response.data.charged_rings);
       setLoadingRings(false);
     } catch (error) {
       // Handle error appropriately
@@ -161,26 +122,7 @@ function BDCFEntryFireTab() {
     }
   };
 
-  const handleSelectRing = async (event) => {
-    const selectedRing = event.target.value;
-    formik.setFieldValue('selectRing', selectedRing);
-  };
-
-  const isSubmitDisabled = () => {
-    const { selectOredrive, selectRing, explosive, blocked_holes, incomplete, comment } = formik.values;
-
-    // Check if mandatory fields are filled
-    const mandatoryFieldsFilled = selectOredrive && selectRing;
-
-    // Check if explosive is required and valid
-    const explosiveValid = blocked_holes || explosive;
-
-    // Check if blocked_holes or incomplete require a comment
-    const commentValid = (!blocked_holes && !incomplete) || comment;
-
-    // Return the final condition
-    return !(mandatoryFieldsFilled && explosiveValid && commentValid);
-  };
+  const isSubmitDisabled = () => {};
 
   return (
     <Grid container spacing={2}>
@@ -207,41 +149,28 @@ function BDCFEntryFireTab() {
             </Box>
 
             {/* Level Dropdown */}
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <FormLabel>Level</FormLabel>
-              <Select
-                name="level"
-                value={formik.values.level}
-                onChange={(e) => handleSelectLevel(e, values, setFieldValue, setTouched)}
-                disabled={levels.length === 0}
-              >
-                {levels.map((level) => (
-                  <MenuItem key={level} value={level}>
-                    {level}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField select label="Select Level" value={formik.values.selectLevel} onChange={handleSelectLevel} fullWidth>
+              {levelOptions.map((level) => (
+                <MenuItem key={level} value={level}>
+                  {level}
+                </MenuItem>
+              ))}
+            </TextField>
 
-            {/* Rings Autocomplete */}
-            <FormControl fullWidth sx={{ mt: 2 }}>
-              <Autocomplete
-                multiple
-                disableCloseOnSelect
-                disableClearable
-                options={rings}
-                getOptionLabel={(option) => option.alias}
-                value={formik.values.ring || []}
-                onChange={(_, newValue) => setFieldValue('ring', newValue)}
-                renderOption={(props, option, { selected }) => (
-                  <li key={option.alias} {...props} style={{ backgroundColor: selected ? '#f0f0f0' : 'transparent' }}>
-                    {option.alias}
-                  </li>
-                )}
-                renderInput={(params) => <TextField {...params} label="Select Rings" variant="outlined" />}
-                disabled={rings.length === 0}
-              />
-            </FormControl>
+            <TextField
+              select
+              label="Select DriveRing"
+              value={formik.values.selectRing}
+              onChange={(event) => formik.setFieldValue('selectRing', event.target.value)}
+              fullWidth
+              disabled={!formik.values.selectLevel} // Disable until Level is selected
+            >
+              {driveRingOptions.map((ring) => (
+                <MenuItem key={ring.location_id} value={ring.location_id}>
+                  {ring.alias}
+                </MenuItem>
+              ))}
+            </TextField>
 
             <Button variant="contained" color="primary" type="submit" disabled={isSubmitDisabled()}>
               Process Ring
@@ -252,24 +181,19 @@ function BDCFEntryFireTab() {
 
       <Grid item xs={12} md={8}>
         <TableContainer component={Paper}>
-          {formik.values.selectOredrive ? (
+          {formik.values.selectLevel ? (
             loadingRings ? (
               <Typography variant="body2">Loading rings...</Typography>
             ) : (
-              <BDCFChargeTable
-                oredrive={formik.values.selectOredrive}
-                ringData={chargedRings}
-                handleSelectOredrive={handleSelectOredrive}
-              />
+              <BDCFFireTable level={formik.values.selectLevel} ringData={firedRings} handleSelectLevel={handleSelectLevel} />
             )
           ) : (
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Completed</TableCell>
-                  <TableCell>Ring</TableCell>
-                  <TableCell>Detonator</TableCell>
-                  <TableCell>Conditions</TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Alias</TableCell>
+                  <TableCell>Contributor</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
