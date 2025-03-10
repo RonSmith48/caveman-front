@@ -1,209 +1,206 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import useUser from 'hooks/useUser';
 
 // material-ui
-import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
-import Divider from '@mui/material/Divider';
-import Grid from '@mui/material/Grid';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemText from '@mui/material/ListItemText';
-import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
-import Typography from '@mui/material/Typography';
+import {
+  CircularProgress,
+  Divider,
+  Grid,
+  Stack,
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+  Checkbox,
+  FormControlLabel
+} from '@mui/material';
 
 // project import
 import MainCard from 'components/MainCard';
+import { fetcher, fetcherPost, fetcherPatch } from 'utils/axios';
+
+// third party
+import * as Yup from 'yup';
+import { Formik, Form } from 'formik';
+import { enqueueSnackbar } from 'notistack';
 
 // ==============================|| ACCOUNT PROFILE - SETTINGS ||============================== //
 
 export default function TabSettings() {
-  const [checked, setChecked] = useState(['en', 'email-1', 'email-3', 'order-1', 'order-3']);
+  const [settings, setSettings] = useState({
+    'equipment-sounds': false,
+    'notification-sound': false
+  });
+  const [loading, setLoading] = useState(true);
+  const [isNew, setIsNew] = useState(false);
+  const { user } = useUser();
 
-  const handleToggle = (value) => () => {
-    const currentIndex = checked.indexOf(value);
-    const newChecked = [...checked];
-
-    if (currentIndex === -1) {
-      newChecked.push(value);
-    } else {
-      newChecked.splice(currentIndex, 1);
+  const fetchSettings = async () => {
+    try {
+      const data = await fetcher(`/settings/user-${user.id}/`);
+      if (data?.data?.value) {
+        setSettings(data.data.value);
+      } else {
+        setIsNew(true);
+      }
+    } catch (error) {
+      console.error('Setting does not exist:', error);
+      setIsNew(true);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    setChecked(newChecked);
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  // Validation Schema
+  const validationSchema = Yup.object().shape({
+    'equipment-sounds': Yup.boolean(),
+    'notification-sound': Yup.boolean()
+  });
+
+  // Submit Handler
+  const handleSubmit = async (values) => {
+    const payload = {
+      key: `user-${user.id}`,
+      value: values
+    };
+
+    try {
+      if (isNew) {
+        await fetcherPost('/settings/', payload);
+        enqueueSnackbar('Personal preferences created', { variant: 'success' });
+      } else {
+        await fetcherPatch(`/settings/user-${user.id}/`, payload);
+        enqueueSnackbar('Personal preferences updated', { variant: 'success' });
+      }
+      setSettings(values);
+    } catch (error) {
+      console.error('Error saving preferences:', error);
+      enqueueSnackbar('Error saving preferences', { variant: 'error' });
+    }
   };
 
   return (
-    <Grid container spacing={3}>
-      <Grid item xs={12} sm={6}>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <MainCard title="Email Settings">
-              <Stack spacing={2.5}>
-                <Typography variant="subtitle1">Setup Email Notification</Typography>
-                <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
-                  <ListItem>
-                    <ListItemText id="switch-list-label-en" primary={<Typography color="secondary">Email Notification</Typography>} />
-                    <Switch
-                      edge="end"
-                      onChange={handleToggle('en')}
-                      checked={checked.indexOf('en') !== -1}
-                      inputProps={{
-                        'aria-labelledby': 'switch-list-label-en'
-                      }}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      id="switch-list-label-sctp"
-                      primary={<Typography color="secondary">Send Copy To Personal Email</Typography>}
-                    />
-                    <Switch
-                      edge="end"
-                      onChange={handleToggle('sctp')}
-                      checked={checked.indexOf('sctp') !== -1}
-                      inputProps={{
-                        'aria-labelledby': 'switch-list-label-sctp'
-                      }}
-                    />
-                  </ListItem>
-                </List>
+    <Formik enableReinitialize initialValues={settings} validationSchema={validationSchema} onSubmit={handleSubmit}>
+      {({ values, handleChange, handleSubmit }) => (
+        <Form onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            {/* Left Column */}
+            <Grid item xs={12} md={6}>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
+                  <MainCard title="Sound & Vision Settings">
+                    <Stack spacing={2.5}>
+                      {loading ? (
+                        <Stack alignItems="center" justifyContent="center" sx={{ minHeight: 100 }}>
+                          <CircularProgress />
+                        </Stack>
+                      ) : (
+                        <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
+                          <ListItem>
+                            <ListItemText primary={<Typography color="secondary">Play activity sound when processing</Typography>} />
+                            <Checkbox checked={values['equipment-sounds']} onChange={handleChange} name="equipment-sounds" />
+                          </ListItem>
+                          <ListItem>
+                            <ListItemText primary={<Typography color="secondary">Play sound on notification</Typography>} />
+                            <Checkbox checked={values['notification-sound']} onChange={handleChange} name="notification-sound" />
+                          </ListItem>
+                        </List>
+                      )}
+                    </Stack>
+                  </MainCard>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <MainCard title="System Notification">
+                    <Stack spacing={2.5}>
+                      <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
+                        <ListItem>
+                          <ListItemText primary={<Typography color="secondary">Lorem ipsum odor amet</Typography>} />
+                          <Checkbox defaultChecked />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText primary={<Typography color="secondary">Habitasse quam montes</Typography>} />
+                          <Checkbox defaultChecked />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText primary={<Typography color="secondary">Hac iaculis nullam</Typography>} />
+                          <Checkbox />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText primary={<Typography color="secondary">Vulputate mi ad quam</Typography>} />
+                          <Checkbox />
+                        </ListItem>
+                        <ListItem>
+                          <ListItemText primary={<Typography color="secondary">Ligula molestie litora</Typography>} />
+                          <Checkbox />
+                        </ListItem>
+                      </List>
+                    </Stack>
+                  </MainCard>
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Right Column */}
+            <Grid item xs={12} md={6}>
+              <MainCard title="Activity Related Emails">
+                <Stack spacing={2.5}>
+                  <Typography variant="subtitle1">When to email?</Typography>
+                  <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary">Etiam ultricies nisi vel augue</Typography>} />
+                      <Checkbox defaultChecked />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary">Curabitur ullamcorper ultricies nisi</Typography>} />
+                      <Checkbox />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary">Maecenas nec odio et ante tincidunt</Typography>} />
+                      <Checkbox defaultChecked />
+                    </ListItem>
+                  </List>
+                  <Divider />
+                  <Typography variant="subtitle1">When to escalate emails?</Typography>
+                  <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary.light">Sed consequat</Typography>} />
+                      <Checkbox defaultChecked disabled />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary.light">Nam quam nunc, blandit vel</Typography>} />
+                      <Checkbox disabled />
+                    </ListItem>
+                    <ListItem>
+                      <ListItemText primary={<Typography color="secondary">Etiam ultricies nisi vel augue</Typography>} />
+                      <Checkbox defaultChecked />
+                    </ListItem>
+                  </List>
+                </Stack>
+              </MainCard>
+            </Grid>
+
+            {/* Submit Buttons */}
+            <Grid item xs={12}>
+              <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
+                <Button variant="outlined" color="secondary">
+                  Cancel
+                </Button>
+                <Button type="submit" variant="contained">
+                  Update Profile
+                </Button>
               </Stack>
-            </MainCard>
+            </Grid>
           </Grid>
-          <Grid item xs={12}>
-            <MainCard title="Updates from System Notification">
-              <Stack spacing={2.5}>
-                <Typography variant="subtitle1">Email you with?</Typography>
-                <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
-                  <ListItem>
-                    <ListItemText primary={<Typography color="secondary">News about PCT-themes products and feature updates</Typography>} />
-                    <Checkbox defaultChecked />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary={<Typography color="secondary">Tips on getting more out of PCT-themes</Typography>} />
-                    <Checkbox defaultChecked />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText
-                      primary={<Typography color="secondary">Things you missed since you last logged into PCT-themes</Typography>}
-                    />
-                    <Checkbox />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary={<Typography color="secondary">News about products and other services</Typography>} />
-                    <Checkbox />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary={<Typography color="secondary">Tips and Document business products</Typography>} />
-                    <Checkbox />
-                  </ListItem>
-                </List>
-              </Stack>
-            </MainCard>
-          </Grid>
-        </Grid>
-      </Grid>
-      <Grid item xs={12} sm={6}>
-        <MainCard title="Activity Related Emails">
-          <Stack spacing={2.5}>
-            <Typography variant="subtitle1">When to email?</Typography>
-            <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
-              <ListItem>
-                <ListItemText id="switch-list-label-email-1" primary={<Typography color="secondary">Have new notifications</Typography>} />
-                <Switch
-                  edge="end"
-                  onChange={handleToggle('email-1')}
-                  checked={checked.indexOf('email-1') !== -1}
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-email-1'
-                  }}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  id="switch-list-label-email-2"
-                  primary={<Typography color="secondary">You&apos;re sent a direct message</Typography>}
-                />
-                <Switch
-                  edge="end"
-                  onChange={handleToggle('email-2')}
-                  checked={checked.indexOf('email-2') !== -1}
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-email-2'
-                  }}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  id="switch-list-label-email-3"
-                  primary={<Typography color="secondary">Someone adds you as a connection</Typography>}
-                />
-                <Switch
-                  edge="end"
-                  onChange={handleToggle('email-3')}
-                  checked={checked.indexOf('email-3') !== -1}
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-email-3'
-                  }}
-                />
-              </ListItem>
-            </List>
-            <Divider />
-            <Typography variant="subtitle1">When to escalate emails?</Typography>
-            <List sx={{ p: 0, '& .MuiListItem-root': { p: 0, py: 0.25 } }}>
-              <ListItem>
-                <ListItemText id="switch-list-label-order-1" primary={<Typography color="secondary.light">Upon new order</Typography>} />
-                <Switch
-                  edge="end"
-                  onChange={handleToggle('order-1')}
-                  checked={checked.indexOf('order-1') !== -1}
-                  disabled
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-order-1'
-                  }}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText
-                  id="switch-list-label-order-2"
-                  primary={<Typography color="secondary.light">New membership approval</Typography>}
-                />
-                <Switch
-                  edge="end"
-                  disabled
-                  onChange={handleToggle('order-2')}
-                  checked={checked.indexOf('order-2') !== -1}
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-order-2'
-                  }}
-                />
-              </ListItem>
-              <ListItem>
-                <ListItemText id="switch-list-label-order-3" primary={<Typography color="secondary">Member registration</Typography>} />
-                <Switch
-                  edge="end"
-                  onChange={handleToggle('order-3')}
-                  checked={checked.indexOf('order-3') !== -1}
-                  inputProps={{
-                    'aria-labelledby': 'switch-list-label-order-3'
-                  }}
-                />
-              </ListItem>
-            </List>
-          </Stack>
-        </MainCard>
-      </Grid>
-      <Grid item xs={12}>
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={2}>
-          <Button variant="outlined" color="secondary">
-            Cancel
-          </Button>
-          <Button variant="contained">Update Profile</Button>
-        </Stack>
-      </Grid>
-    </Grid>
+        </Form>
+      )}
+    </Formik>
   );
 }
