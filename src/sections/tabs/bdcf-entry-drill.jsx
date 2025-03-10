@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import useUser from 'hooks/useUser';
 
 // material-ui
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
@@ -46,24 +47,39 @@ function BDCFEntryDrillTab() {
   const [drilledRings, setDrilledRings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRings, setLoadingRings] = useState(false);
-  const audioRef = useRef(new Audio('/assets/sounds/052168_explosion.mp3'));
+
+  const { user } = useUser();
+  const [settings, setSettings] = useState({ 'equipment-sounds': false });
+  const audioRef = useRef(new Audio('/assets/sounds/prod_drill_1.mp3'));
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetcher('/prod-actual/bdcf/drill/');
-        setData(response.data);
-        setDropdownOptions(response.data.designed_list);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching designed rings list:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
+    fetchSettings();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const response = await fetcher('/prod-actual/bdcf/drill/');
+      setData(response.data);
+      setDropdownOptions(response.data.designed_list);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching designed rings list:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const data = await fetcher(`/settings/user-${user.id}/`);
+      if (data?.data?.value) {
+        setSettings(data.data.value);
+      }
+    } catch (error) {
+      console.error('Setting does not exist, using default', error);
+    }
+  };
 
   const validationSchema = Yup.object().shape({
     pickerDate: Yup.date().required('Date is required'),
@@ -90,8 +106,10 @@ function BDCFEntryDrillTab() {
     validationSchema,
     onSubmit: async (values) => {
       try {
-        audioRef.current.currentTime = 0;
-        audioRef.current.play();
+        if (settings['equipment-sounds'] == true) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        }
 
         const formattedDate = formatDate(values.pickerDate);
         const payload = {

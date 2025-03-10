@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useUser from 'hooks/useUser';
 
 // material-ui
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
@@ -43,24 +44,42 @@ function BDCFEntryFireTab() {
   const [levelOptions, setLevelOptions] = useState([]);
   const [driveRingOptions, setdriveRingOptions] = useState([]);
   const [firedRings, setFiredRings] = useState([]);
+  const [filteredRings, setFilteredRings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingRings, setLoadingRings] = useState(false);
+  const [isFiring, setIsFiring] = useState(false);
+
+  const { user } = useUser();
+  const [settings, setSettings] = useState({ 'equipment-sounds': false });
+  const audioRef = useRef(new Audio('/assets/sounds/052168_explosion.mp3'));
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const fireResponse = await fetcher('/prod-actual/bdcf/fire/');
-        setLevelOptions(fireResponse.data);
-      } catch (error) {
-        console.error('Error fetching charged rings list:', error);
-        enqueueSnackbar('Error fetching levels containing charged rings', { variant: 'error' });
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
+    fetchSettings();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const fireResponse = await fetcher('/prod-actual/bdcf/fire/');
+      setLevelOptions(fireResponse.data);
+    } catch (error) {
+      console.error('Error fetching charged rings list:', error);
+      enqueueSnackbar('Error fetching levels containing charged rings', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const data = await fetcher(`/settings/user-${user.id}/`);
+      if (data?.data?.value) {
+        setSettings(data.data.value);
+      }
+    } catch (error) {
+      console.error('Setting does not exist, using default', error);
+    }
+  };
 
   const validationSchema = Yup.object().shape({
     pickerDate: Yup.date().required('Date is required'),
@@ -78,16 +97,26 @@ function BDCFEntryFireTab() {
     onSubmit: async (values) => {
       try {
         const formattedDate = formatDate(values.pickerDate);
+        const selectedRingData = driveRingOptions.find((ring) => ring.location_id === values.selectRing);
 
         const payload = {
           date: formattedDate,
           shift: values.shift,
-          location_id: values.selectRing // Use selectRing as location_id
+          location_id: values.selectRing, // Use selectRing as location_id
+          oredrive: selectedRingData ? selectedRingData.oredrive : null
         };
 
         const response = await fetcherPost('/prod-actual/bdcf/fire/', payload);
+        if (settings['equipment-sounds'] == true) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        }
 
-        enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+        if (response?.data?.msg) {
+          enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+        } else {
+          enqueueSnackbar('Ring fired successfully', { variant: 'success' });
+        }
 
         // Optionally reset the form or refetch data
         formik.resetForm();
@@ -107,12 +136,17 @@ function BDCFEntryFireTab() {
     formik.setFieldValue('selectLevel', lvl);
     formik.setFieldValue('selectRing', '');
 
+    setIsFiring(false);
     setLoadingRings(true);
 
     try {
       const response = await fetcher(`/prod-actual/bdcf/fire/${lvl}/`);
-      setFiredRings(response.data.fired_rings || []);
-      setdriveRingOptions(response.data.charged_rings);
+      const boggingRings = response.data.fired_rings || [];
+      const chargedRings = response.data.charged_rings || [];
+
+      setFiredRings(boggingRings); // Store all bogging rings
+      setFilteredRings(boggingRings);
+      setdriveRingOptions(chargedRings);
       setLoadingRings(false);
     } catch (error) {
       // Handle error appropriately
@@ -122,7 +156,34 @@ function BDCFEntryFireTab() {
     }
   };
 
-  const isSubmitDisabled = () => {};
+  const handleSelectRing = (event) => {
+    const selectedLocationId = event.target.value;
+    formik.setFieldValue('selectRing', selectedLocationId);
+
+    if (!selectedLocationId) {
+      // No selection, show all rings
+      setFilteredRings(firedRings);
+      setIsFiring(false);
+    } else {
+      // Find the ring in driveRingOptions with the selected location_id
+      const selectedRingData = driveRingOptions.find((ring) => ring.location_id === selectedLocationId);
+
+      if (selectedRingData) {
+        // Filter firedRings to include only those with the same oredrive
+        const filtered = firedRings.filter((ring) => ring.oredrive === selectedRingData.oredrive);
+        setFilteredRings(filtered);
+        setIsFiring(true);
+      } else {
+        // In case nothing matches, default to all fired rings
+        setFilteredRings(firedRings);
+        setIsFiring(false);
+      }
+    }
+  };
+
+  const isSubmitDisabled = () => {
+    return !formik.values.selectRing;
+  };
 
   return (
     <Grid container spacing={2}>
@@ -161,7 +222,7 @@ function BDCFEntryFireTab() {
               select
               label="Select DriveRing"
               value={formik.values.selectRing}
-              onChange={(event) => formik.setFieldValue('selectRing', event.target.value)}
+              onChange={handleSelectRing}
               fullWidth
               disabled={!formik.values.selectLevel} // Disable until Level is selected
             >
@@ -173,7 +234,7 @@ function BDCFEntryFireTab() {
             </TextField>
 
             <Button variant="contained" color="primary" type="submit" disabled={isSubmitDisabled()}>
-              Process Ring
+              {settings['equipment-sounds'] ? 'Fire in the Hole' : 'Fire Ring'}
             </Button>
           </Box>
         </form>
@@ -185,7 +246,12 @@ function BDCFEntryFireTab() {
             loadingRings ? (
               <Typography variant="body2">Loading rings...</Typography>
             ) : (
-              <BDCFFireTable level={formik.values.selectLevel} ringData={firedRings} handleSelectLevel={handleSelectLevel} />
+              <BDCFFireTable
+                level={formik.values.selectLevel}
+                ringData={filteredRings}
+                handleSelectLevel={handleSelectLevel}
+                isFiring={isFiring}
+              />
             )
           ) : (
             <Table>

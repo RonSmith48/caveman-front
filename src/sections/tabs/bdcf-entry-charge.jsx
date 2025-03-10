@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import useUser from 'hooks/useUser';
 
 // material-ui
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
@@ -49,29 +50,45 @@ function BDCFEntryChargeTab() {
   const [loadingRings, setLoadingRings] = useState(false);
   const [oredriveValue, setOredriveValue] = useState('');
 
+  const { user } = useUser();
+  const [settings, setSettings] = useState({ 'equipment-sounds': false });
+  const audioRef = useRef(new Audio('/assets/sounds/pump_action_1.mp3'));
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [chargeResponse, detTypes] = await Promise.all([
-          fetcher('/prod-actual/bdcf/charge/'),
-          fetcher('/settings/explosive-types-list/')
-        ]);
-
-        setData(chargeResponse.data);
-        setDropdownOptions(chargeResponse.data.drilled_drives_list);
-        if (detTypes) {
-          setDetOptions(detTypes.data.value);
-        }
-      } catch (error) {
-        console.error('Error fetching designed rings list:', error);
-        enqueueSnackbar('Check explosive list types', {variant:'error'})
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
+    fetchSettings();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      const [chargeResponse, detTypes] = await Promise.all([
+        fetcher('/prod-actual/bdcf/charge/'),
+        fetcher('/settings/explosive-types-list/')
+      ]);
+
+      setData(chargeResponse.data);
+      setDropdownOptions(chargeResponse.data.drilled_drives_list);
+      if (detTypes) {
+        setDetOptions(detTypes.data.value);
+      }
+    } catch (error) {
+      console.error('Error fetching designed rings list:', error);
+      enqueueSnackbar('Check explosive list types', { variant: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const data = await fetcher(`/settings/user-${user.id}/`);
+      if (data?.data?.value) {
+        setSettings(data.data.value);
+      }
+    } catch (error) {
+      console.error('Setting does not exist, using default', error);
+    }
+  };
 
   const validationSchema = Yup.object().shape({
     pickerDate: Yup.date().required('Date is required'),
@@ -119,6 +136,12 @@ function BDCFEntryChargeTab() {
         };
 
         const response = await fetcherPost('/prod-actual/bdcf/charge/', payload);
+
+        // play a sound if enabled
+        if (settings['equipment-sounds'] == true) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play();
+        }
 
         enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
 
@@ -357,7 +380,7 @@ function BDCFEntryChargeTab() {
             </FormControl>
 
             <Button variant="contained" color="primary" type="submit" disabled={isSubmitDisabled()}>
-              Process Ring
+              {settings['equipment-sounds'] ? 'Lock n Load' : 'Charge Ring'}
             </Button>
           </Box>
         </form>
