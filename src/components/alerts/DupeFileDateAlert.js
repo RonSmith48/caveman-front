@@ -15,13 +15,9 @@ import {
 import { CloseOutlined } from '@mui/icons-material';
 import { WarningFilled } from '@ant-design/icons';
 
-// project imports
-import MainCard from 'components/MainCard';
-import SingleFileUpload from 'components/third-party/dropzone/DupeDropzone';
-
 // ==============================|| PLUGINS - DROPZONE ||============================== //
 
-const DupeUpload = () => {
+const DupeFileDateAlert = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleLearnMoreClick = () => {
@@ -34,12 +30,7 @@ const DupeUpload = () => {
 
   return (
     <Grid container spacing={3}>
-      <Grid item xs={6}>
-        <MainCard>
-          <SingleFileUpload />
-        </MainCard>
-      </Grid>
-      <Grid item xs={6}>
+      <Grid item xs={12}>
         <Grid>
           <Alert color="warning" variant="border" icon={<WarningFilled />}>
             <AlertTitle variant="h5">SET THE DUPE FILE DATE FIRST</AlertTitle>
@@ -86,4 +77,4 @@ const DupeUpload = () => {
   );
 };
 
-export default DupeUpload;
+export default DupeFileDateAlert;

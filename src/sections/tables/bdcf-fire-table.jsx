@@ -30,7 +30,7 @@ import RowEditable from './bog-RowEditable';
 import { fetcher, fetcherPut, fetcherPost } from 'utils/axios';
 import SvgAvatar from 'components/SvgAvatar';
 import { formatToShift } from 'utils/shkey';
-import ChargeEditModal from 'components/modal/ChargeEditModal';
+import FireEditModal from 'components/modal/FireEditModal';
 
 // assets
 import EditTwoTone from '@ant-design/icons/EditTwoTone';
@@ -59,7 +59,7 @@ function EditAction({ location_id, handleSelectOredrive, od }) {
       </Stack>
 
       {/* Pass location_id and handleSelectOredrive to the modal */}
-      <ChargeEditModal
+      <FireEditModal
         open={openModal}
         onClose={handleClose}
         location_id={selectedLocationId}
@@ -139,22 +139,23 @@ ReactTable.propTypes = {
 // ringData - Table row data
 // handleSelectOredrive - method for updating charged rings table and SelectRing dropdown if ring uncharged
 
-export default function BDCFFireTable({ level, ringData, handleSelectOredrive }) {
+export default function BDCFFireTable({ level, ringData, handleSelectOredrive, isFiring }) {
   const [data, setData] = useState(ringData);
+  const [firing, setFiring] = useState(isFiring);
   const [loading, setLoading] = useState(true);
   const SM_AVATAR_SIZE = 32;
 
   useEffect(() => {
     setData(ringData); // Update table data when ringData changes
+    setFiring(isFiring);
     setLoading(false);
-    console.log('ringdata', ringData);
   }, [ringData]);
 
   // Memoize columns outside of any conditional statement
   const columns = useMemo(
     () => [
       {
-        header: 'Completed',
+        header: 'Fired',
         accessorKey: 'fired_shift', // Key from your data source
         cell: (info) => {
           const value = info.getValue();
@@ -181,11 +182,23 @@ export default function BDCFFireTable({ level, ringData, handleSelectOredrive })
       {
         header: 'Remaining',
         accessorKey: 'remaining',
-        cell: (info) => info.getValue(),
+        cell: (info) => {
+          const value = info.getValue();
+          let bgColor = '';
+
+          if (value >= -250 && value <= 250) {
+            bgColor = '#d3f8d3'; // Green for values between -250 and 250
+          } else if (value < -250 || (value > 250 && firing)) {
+            bgColor = '#ffcccc'; // Red for values < -250 OR > 250 when isFiring is true
+          }
+
+          return <div style={{ backgroundColor: bgColor, padding: '8px', textAlign: 'right' }}>{value}</div>;
+        },
         meta: {
           className: 'cell-right'
         }
       },
+
       {
         header: 'Contributor',
         accessorKey: 'contributor',
@@ -235,7 +248,7 @@ export default function BDCFFireTable({ level, ringData, handleSelectOredrive })
         }
       }
     ],
-    [handleSelectOredrive]
+    [handleSelectOredrive, firing]
   );
 
   if (loading) return <p>Loading...</p>;
