@@ -35,7 +35,7 @@ import FireEditModal from 'components/modal/FireEditModal';
 // assets
 import EditTwoTone from '@ant-design/icons/EditTwoTone';
 
-function EditAction({ location_id, handleSelectOredrive, od }) {
+function EditAction({ location_id, handleSelectLevel, level }) {
   const [openModal, setOpenModal] = useState(false);
   const [selectedLocationId, setSelectedLocationId] = useState(null);
 
@@ -63,8 +63,8 @@ function EditAction({ location_id, handleSelectOredrive, od }) {
         open={openModal}
         onClose={handleClose}
         location_id={selectedLocationId}
-        handleSelectOredrive={handleSelectOredrive}
-        od={od}
+        handleSelectLevel={handleSelectLevel}
+        level={level}
       />
     </>
   );
@@ -139,7 +139,7 @@ ReactTable.propTypes = {
 // ringData - Table row data
 // handleSelectOredrive - method for updating charged rings table and SelectRing dropdown if ring uncharged
 
-export default function BDCFFireTable({ level, ringData, handleSelectOredrive, isFiring }) {
+export default function BDCFFireTable({ level, ringData, handleSelectLevel, isFiring }) {
   const [data, setData] = useState(ringData);
   const [firing, setFiring] = useState(isFiring);
   const [loading, setLoading] = useState(true);
@@ -239,8 +239,8 @@ export default function BDCFFireTable({ level, ringData, handleSelectOredrive, i
         cell: (info) => (
           <EditAction
             location_id={info.row.original.location_id} // Explicitly pass location_id
-            handleSelectOredrive={handleSelectOredrive}
-            od={level}
+            handleSelectLevel={handleSelectLevel}
+            level={level}
           />
         ),
         meta: {
@@ -248,7 +248,7 @@ export default function BDCFFireTable({ level, ringData, handleSelectOredrive, i
         }
       }
     ],
-    [handleSelectOredrive, firing]
+    [handleSelectLevel, firing]
   );
 
   if (loading) return <p>Loading...</p>;

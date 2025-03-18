@@ -29,18 +29,17 @@ import SvgAvatar from 'components/SvgAvatar';
 import { Formik, Form, Field } from 'formik';
 import { fetcher, fetcherPatch } from 'utils/axios';
 import RingDetailModal from 'components/modal/RingDetailModal';
-import BDCFBogTable from 'sections/tables/bdcf-bog-table';
 
 const formatDate = (isoString) => {
   const date = new Date(isoString);
   return date.toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level }) => {
+const DrillEditModal = ({ open, onClose, location_id, handleSelectOredrive, od }) => {
   const [ringDetails, setRingDetails] = useState(null);
   const [conditionOptions, setConditionOptions] = useState([]);
-  const [openFullDetail, setopenFullDetail] = useState(false);
-  const [openUnchargeConfirm, setOpenUnchargeConfirm] = useState(false);
+  const [openFullDetail, setOpenFullDetail] = useState(false);
+  const [openUndrillConfirm, setOpenUndrillConfirm] = useState(false);
 
   const SM_AVATAR_SIZE = 32;
   const LG_AVATAR_SIZE = 52;
@@ -51,13 +50,12 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
     if (open && location_id) {
       const fetchAllData = async () => {
         try {
-          const [ringDetail, chargeResponse, detTypes] = await Promise.all([
+          const [ringDetail, drillResponse] = await Promise.all([
             fetcher(`/prod-actual/bdcf/${location_id}`),
-            fetcher('/prod-actual/bdcf/conditions/Charged/')
+            fetcher('/prod-actual/bdcf/conditions/Drilled/')
           ]);
           setRingDetails(ringDetail.data);
-          console.log(ringDetail.data);
-          setConditionOptions(chargeResponse.data);
+          setConditionOptions(drillResponse.data);
         } catch (error) {
           console.error('Failed to fetch detonator options:', error);
         }
@@ -66,15 +64,15 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
     }
   }, [open, location_id]);
 
-  const handleUnchargeClick = () => {
-    setOpenUnchargeConfirm(true); // Open confirmation dialog
+  const handleUndrillClick = () => {
+    setOpenUndrillConfirm(true); // Open confirmation dialog
   };
 
-  const handleCancelUncharge = () => {
-    setOpenUnchargeConfirm(false); // Close confirmation dialog
+  const handleCancelUndrill = () => {
+    setOpenUndrillConfirm(false); // Close confirmation dialog
   };
 
-  const handleProceedUncharge = async () => {
+  const handleProceedUndrill = async () => {
     try {
       const payload = {
         location_id: ringDetails.prod_ring?.location_id // Send location_id to API
@@ -85,18 +83,18 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
 
       onClose(); // Close main dialog
     } catch (error) {
-      console.error('Uncharge Error:', error.response?.data || error.message);
+      console.error('Undrill Error:', error.response?.data || error.message);
     } finally {
-      setOpenUnchargeConfirm(false); // Close confirmation dialog
-      handleSelectLevel({ target: { value: level } });
+      setOpenUndrillConfirm(false); // Close confirmation dialog
+      handleSelectOredrive({ target: { value: od } });
     }
   };
 
   const handleFullDetail = () => {
-    setopenFullDetail(true);
+    setOpenFullDetail(true);
   };
   const handleCloseFullDetail = () => {
-    setopenFullDetail(false);
+    setOpenFullDetail(false);
   };
 
   const handleSubmit = async (values, { setSubmitting }) => {
@@ -115,7 +113,7 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
       console.error('Submission Error:', error.response?.data || error.message);
     } finally {
       setSubmitting(false);
-      handleSelectLevel({ target: { value: level } });
+      handleSelectOredrive({ target: { value: od } });
     }
   };
 
@@ -138,13 +136,11 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
 
   return (
     <Dialog open={open} onClose={onClose} fullScreen>
-      <DialogTitle>Edit Production Ring</DialogTitle>
+      <DialogTitle>Edit Production Ring {ringDetails.prod_ring?.alias}</DialogTitle>
       <DialogContent sx={{ p: 3 }}>
         <Grid container spacing={3} justifyContent="space-between">
           {/* Left Side: Table */}
           <Grid item xs={12} md={9}>
-            <BDCFBogTable location_id={ringDetails.prod_ring?.location_id} ringName={ringDetails.prod_ring?.alias} refreshKey={null} />
-            <br />
             <TableContainer component={Paper} sx={{ overflowX: 'auto', minHeight: '300px' }}>
               <Table>
                 <TableHead>
@@ -266,13 +262,8 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
                     {/* Buttons */}
                     <Grid item xs={12}>
                       <Box display="flex" justifyContent="flex-start" gap={2}>
-                        <Button
-                          onClick={handleUnchargeClick}
-                          variant="outlined"
-                          color="warning"
-                          disabled={parseFloat(ringDetails?.prod_ring?.bogged_tonnes) !== 0}
-                        >
-                          Un-Fire
+                        <Button onClick={handleUndrillClick} variant="outlined" color="warning">
+                          UnDrill
                         </Button>
                         <Button onClick={handleFullDetail} variant="outlined">
                           Full Detail
@@ -297,17 +288,17 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
         </Grid>
       </DialogContent>
       <RingDetailModal open={openFullDetail} onClose={handleCloseFullDetail} />
-      {/* Uncharge warning dialog */}
-      <Dialog open={openUnchargeConfirm} onClose={handleCancelUncharge} maxWidth="sm" fullWidth>
-        <DialogTitle>Confirm Un-Fire</DialogTitle>
+      {/* Undrill warning dialog */}
+      <Dialog open={openUndrillConfirm} onClose={handleCancelUndrill} maxWidth="sm" fullWidth>
+        <DialogTitle>Confirm UnDrill</DialogTitle>
         <DialogContent>
-          <Typography>Rollback to charged state?</Typography>
+          <Typography>Rollback to Designed status?</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelUncharge} color="secondary">
+          <Button onClick={handleCancelUndrill} color="secondary">
             Cancel
           </Button>
-          <Button onClick={handleProceedUncharge} color="error" variant="contained">
+          <Button onClick={handleProceedUndrill} color="error" variant="contained">
             Proceed
           </Button>
         </DialogActions>
@@ -316,11 +307,11 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
   );
 };
 
-FireEditModal.propTypes = {
+DrillEditModal.propTypes = {
   open: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   location_id: PropTypes.string, // adjust to match the type of your location_id
   handleSelectOredrive: PropTypes.func
 };
 
-export default FireEditModal;
+export default DrillEditModal;

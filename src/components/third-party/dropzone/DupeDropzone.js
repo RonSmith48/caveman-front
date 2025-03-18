@@ -111,19 +111,19 @@ const SingleFileUpload = ({ error, file, sx }) => {
       >
         <input {...getInputProps()} />
         {selectedFile ? (
-          <div>
+          <Box>
             {uploadComplete ? (
-              <div>
+              <Box>
                 <Typography variant="body1">Processing</Typography>
                 <LinearProgress />
-              </div>
+              </Box>
             ) : (
-              <div>
+              <Box>
                 <Typography variant="body1">Uploading {selectedFile.name}</Typography>
                 <LinearWithLabel variant="determinate" value={progress} />
-              </div>
+              </Box>
             )}
-          </div>
+          </Box>
         ) : (
           <PlaceholderContent />
         )}

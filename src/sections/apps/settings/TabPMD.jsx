@@ -5,7 +5,7 @@ import Grid from '@mui/material/Grid';
 import ExplosiveTypes from 'sections/forms/PMDExplosiveTypeSetting';
 import RingConditionList from 'sections/forms/PMDConditionsSetting';
 import SingleFileUpload from 'components/third-party/dropzone/DupeDropzone';
-import DupeFileDateAlert from 'components/alerts/dupeFileDateAlert';
+import DupeFileDateAlert from 'components/alerts/DupeFileDateAlert';
 
 function TabPMD() {
   const headers = {};

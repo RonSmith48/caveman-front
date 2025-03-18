@@ -29,163 +29,156 @@ import { enqueueSnackbar } from 'notistack';
 
 // Project imports
 import MainCard from 'components/MainCard';
-import { fetcher, fetcherPost, fetcherPatch } from 'utils/axios';
+import { fetcher, fetcherPost } from 'utils/axios';
 
 function RingConditionList() {
-  const [settings, setSettings] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [newItem, setNewItem] = useState('');
-  const [isNew, setIsNew] = useState(false);
   const [states, setStates] = useState([]); // Store all ring states
+  const [loading, setLoading] = useState(true);
   const [selectedPriState, setSelectedPriState] = useState(''); // Selected primary state
-  const [secStates, setSecStates] = useState([]);
+  const [secStates, setSecStates] = useState([]); // Store filtered secondary states
+  const [newItem, setNewItem] = useState(''); // New condition input
+  const [adding, setAdding] = useState(false); // Button loading state
 
-  const fetchSettings = async () => {
+  // Fetch states data from API
+  const fetchStatesList = async () => {
     try {
-      const data = await fetcher('/settings/ring-conditions-list/');
-      if (data) {
-        setSettings(data.data.value || []);
-      } else {
-        setSettings([]);
-        setIsNew(true);
+      const response = await fetcher('/prod-actual/ring-states/');
+      if (response) {
+        setStates(response.data);
       }
     } catch (error) {
-      console.error('Error fetching settings:', error);
-      setSettings([]);
-      setIsNew(true);
+      console.error('Error fetching states list:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStatesList = async () => {
-    try {
-      const statesData = await fetcher('/prod_actual/ring-states/');
-      if (statesData) {
-        setStates(statesData);
-      }
-    } catch (error) {
-      console.error('Error fetching states list:', error);
-    }
-  };
-
-  const saveSettings = async (values) => {
-    const payload = {
-      key: 'ring-conditions-list',
-      value: values
-    };
-
-    try {
-      if (isNew) {
-        await fetcherPost('/settings/', payload);
-        enqueueSnackbar('Ring conditions list created', { variant: 'success' });
-      } else {
-        await fetcherPatch('/settings/ring-conditions-list/', payload);
-        enqueueSnackbar('Ring conditions list settings updated', { variant: 'success' });
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error);
-      enqueueSnackbar('Error saving setting', { variant: 'error' });
-    }
-  };
-
-  const addItem = () => {
-    if (newItem.trim()) {
-      setSettings((prev) => [...prev, newItem.trim()]);
-      setNewItem('');
-    }
-  };
-
-  const removeItem = (index) => {
-    setSettings((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  useEffect(() => {
-    fetchSettings();
-    fetchStatesList();
-  }, []);
-
+  // Update secondary states when primary state changes
   useEffect(() => {
     if (selectedPriState) {
-      const filteredSecStates = states.filter((state) => state.pri_state === selectedPriState);
+      const filteredSecStates = states
+        .filter((state) => state.pri_state === selectedPriState && state.sec_state)
+        .map((state) => ({ sec_state: state.sec_state, can_delete: state.can_delete }));
       setSecStates(filteredSecStates);
     } else {
       setSecStates([]);
     }
   }, [selectedPriState, states]);
 
+  // Add new condition
+  const addItem = async () => {
+    if (!newItem.trim()) return;
+
+    // Prevent duplicate entries
+    if (secStates.some((state) => state.sec_state === newItem.trim())) {
+      console.warn('Duplicate entry detected.');
+      return;
+    }
+
+    setAdding(true);
+    const payload = {
+      pri_state: selectedPriState,
+      sec_state: newItem.trim()
+    };
+
+    try {
+      const addState = await fetcherPost('/prod-actual/ring-states/', payload);
+      setNewItem('');
+      fetchStatesList(); // Refresh table after adding
+      if (addState?.data?.msg) {
+        enqueueSnackbar(addState.data.msg.body, { variant: addState.data.msg.type });
+      } else {
+        enqueueSnackbar('Condition added successfully', { variant: 'success' });
+      }
+    } catch (error) {
+      console.error('Error adding new condition:', error);
+      enqueueSnackbar('Error adding new condition', { variant: 'error' });
+    } finally {
+      setAdding(false);
+    }
+  };
+
+  // Remove item
+  const removeItem = async (secState) => {
+    try {
+      const deleteState = await fetcherPost('/prod-actual/ring-states/delete/', { pri_state: selectedPriState, sec_state: secState });
+      fetchStatesList(); // Refresh table after deletion
+      if (deleteState?.data?.msg) {
+        enqueueSnackbar(deleteState.data.msg.body, { variant: deleteState.data.msg.type });
+      } else {
+        enqueueSnackbar('Condition deleted successfully', { variant: 'success' });
+      }
+    } catch (error) {
+      console.error('Error deleting condition:', error);
+      enqueueSnackbar('Error deleting condition', { variant: 'error' });
+    }
+  };
+
+  useEffect(() => {
+    fetchStatesList();
+  }, []);
+
   return (
     <MainCard title="Ring Conditions" secondary="Help">
       {!loading ? (
-        <Formik
-          enableReinitialize
-          initialValues={{ explosiveTypes: settings }}
-          onSubmit={(values, { setSubmitting }) => {
-            setSubmitting(true);
-            saveSettings(values.explosiveTypes).finally(() => setSubmitting(false));
-          }}
-        >
-          {({ handleSubmit, isSubmitting }) => (
-            <Box component="form" noValidate onSubmit={handleSubmit}>
-              <Grid container spacing={3}>
-                {/* Form Section */}
-                <Grid item xs={12} md={5}>
-                  <Stack spacing={2}>
-                    <Select fullWidth value={selectedPriState} onChange={(e) => setSelectedPriState(e.target.value)} displayEmpty>
-                      <MenuItem value="" disabled>
-                        Select Primary State
-                      </MenuItem>
-                      {Array.from(new Set(states.map((state) => state.pri_state))).map((priState, index) => (
-                        <MenuItem key={index} value={priState}>
-                          {priState}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    <TextField fullWidth label="New Ring Condition" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
-                    <Button variant="contained" onClick={addItem} disabled={!newItem.trim()}>
-                      Add
-                    </Button>
-                  </Stack>
-                  <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
-                    <Button type="submit" variant="contained" disabled={isSubmitting || settings.length === 0}>
-                      Save
-                    </Button>
-                  </Stack>
-                </Grid>
+        <Box>
+          <Grid container spacing={3}>
+            {/* Selection & Input Section */}
+            <Grid item xs={12} md={5}>
+              <Stack spacing={2}>
+                {/* Primary State Selector */}
+                <Select fullWidth value={selectedPriState} onChange={(e) => setSelectedPriState(e.target.value)} displayEmpty>
+                  <MenuItem value="" disabled>
+                    Select Primary State
+                  </MenuItem>
+                  {Array.from(new Set(states.map((state) => state.pri_state))).map((priState, index) => (
+                    <MenuItem key={index} value={priState}>
+                      {priState}
+                    </MenuItem>
+                  ))}
+                </Select>
 
-                {/* Table Section */}
-                <Grid item xs={12} md={7}>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>
-                            <strong>Condition</strong>
-                          </TableCell>
+                {/* New Condition Input */}
+                <TextField fullWidth label="New Ring Condition" value={newItem} onChange={(e) => setNewItem(e.target.value)} />
+                <Button variant="contained" onClick={addItem} disabled={adding || !newItem.trim()}>
+                  {adding ? 'Adding...' : 'Add'}
+                </Button>
+              </Stack>
+            </Grid>
+
+            {/* Secondary State Table */}
+            <Grid item xs={12} md={7}>
+              <TableContainer component={Paper}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        <strong>Condition</strong>
+                      </TableCell>
+                      <TableCell align="right">
+                        <strong>Actions</strong>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  {secStates.length > 0 && (
+                    <TableBody>
+                      {secStates.map((state, index) => (
+                        <TableRow key={index}>
+                          <TableCell>{state.sec_state}</TableCell>
                           <TableCell align="right">
-                            <strong>Actions</strong>
+                            <IconButton edge="end" onClick={() => removeItem(state.sec_state)} disabled={!state.can_delete}>
+                              <DeleteIcon />
+                            </IconButton>
                           </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {settings.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{item}</TableCell>
-                            <TableCell align="right">
-                              <IconButton edge="end" onClick={() => removeItem(index)}>
-                                <DeleteIcon />
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Grid>
-              </Grid>
-            </Box>
-          )}
-        </Formik>
+                      ))}
+                    </TableBody>
+                  )}
+                </Table>
+              </TableContainer>
+            </Grid>
+          </Grid>
+        </Box>
       ) : (
         <CircularProgress />
       )}

@@ -18,9 +18,12 @@ import {
   FormGroup,
   FormLabel,
   InputLabel,
+  ListItemIcon,
+  ListItemText,
   Radio,
   RadioGroup,
   FormControlLabel,
+  Stack,
   TableContainer,
   Table,
   TableHead,
@@ -29,6 +32,7 @@ import {
   Paper,
   Typography
 } from '@mui/material';
+import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 
 // third party
 import dayjs from 'dayjs';
@@ -148,6 +152,9 @@ function BDCFEntryFireTab() {
       setFilteredRings(boggingRings);
       setdriveRingOptions(chargedRings);
       setLoadingRings(false);
+      if (response.data?.msg?.body) {
+        enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+      }
     } catch (error) {
       // Handle error appropriately
       console.error('Error fetching rings:', error);
@@ -227,8 +234,23 @@ function BDCFEntryFireTab() {
               disabled={!formik.values.selectLevel} // Disable until Level is selected
             >
               {driveRingOptions.map((ring) => (
-                <MenuItem key={ring.location_id} value={ring.location_id}>
-                  {ring.alias}
+                <MenuItem
+                  key={ring.location_id}
+                  value={ring.location_id}
+                  disabled={ring.orphaned}
+                  sx={(theme) => ({
+                    bgcolor: ring.orphaned ? theme.palette.warning.light : 'inherit', // Background warning color
+                    opacity: ring.orphaned ? 0.8 : 1, // Slight transparency for disabled effect
+                    '&.Mui-disabled': {
+                      bgcolor: theme.palette.warning.light, // Keep background color even when disabled
+                      opacity: 0.6 // Make it look disabled but still noticeable
+                    }
+                  })}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                    <ListItemText primary={ring.alias} />
+                    {ring.orphaned && <WarningAmberOutlinedIcon sx={{ color: '#cc5200' }} />}
+                  </Box>
                 </MenuItem>
               ))}
             </TextField>

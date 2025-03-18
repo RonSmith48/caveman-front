@@ -40,7 +40,7 @@ function ExplosiveTypes() {
 
   const fetchSettings = async () => {
     try {
-      const data = await fetcher('/settings/explosive-types-list');
+      const data = await fetcher('/settings/explosive-types-list/');
       if (data) {
         setSettings(data.data.value || []);
       } else {
