@@ -112,16 +112,20 @@ function BDCFEntryDrillTab() {
         }
 
         const formattedDate = formatDate(values.pickerDate);
+        // Construct the drill conditions list
+        const drillConditions = [];
+        if (values.redrill) drillConditions.push('Redrilled');
+        if (values.half_drilled) drillConditions.push('Incomplete');
+        if (values.lost_rods) drillConditions.push('Lost Rods');
+        if (values.has_bg) drillConditions.push('BG Reported');
+        if (values.making_water) drillConditions.push('Making Water');
+
         const payload = {
           date: formattedDate,
           shift: values.shift,
           location_id: values.selectRing, // Use selectRing as location_id
           drilled_mtrs: values.drilled_mtrs || null,
-          redrill: isRedrill,
-          half_drilled: values.half_drilled,
-          lost_rods: values.lost_rods,
-          has_bg: values.has_bg,
-          making_water: values.making_water,
+          conditions: drillConditions, // Send drill conditions as a list
           status: 'Drilled'
         };
 
