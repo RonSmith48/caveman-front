@@ -135,7 +135,7 @@ function GeoFiredRingsWidget() {
           pt: 2
         }}
       >
-        <Typography variant="h5">Fired Rings Grades</Typography>
+        <Typography variant="h5">Fired Ring Grades</Typography>
         {/* Title + Date Picker */}
         <Box sx={{ display: 'flex', alignItems: 'right', gap: 2 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
