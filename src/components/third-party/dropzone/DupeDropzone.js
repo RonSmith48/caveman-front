@@ -11,6 +11,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 // third-party
 import { useDropzone } from 'react-dropzone';
 import dayjs from 'dayjs';
+import { enqueueSnackbar } from 'notistack';
 
 // project import
 import RejectionFiles from './RejectionFiles';
@@ -63,10 +64,11 @@ const SingleFileUpload = ({ error, file, sx }) => {
             }
           }
         });
-        console.log(response);
         setSelectedFile(null);
         setProgress(0);
-        // toast(response.data.msg, { variant: response.data.msg_type });
+        if (response?.data?.msg) {
+          enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
+        }
       } catch (error) {
         console.error('Upload error:', error);
         setSelectedFile(null);
