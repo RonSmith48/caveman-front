@@ -10,20 +10,23 @@ import PatternOutlinedIcon from '@mui/icons-material/PatternOutlined';
 import FlareOutlinedIcon from '@mui/icons-material/FlareOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
 
 // project import
 import MainCard from 'components/MainCard';
-import BDCFEntryBogTab from './bdcf-entry-bog';
-import BDCFEntryDrillTab from './bdcf-entry-drill';
-import BDCFEntryChargeTab from './bdcf-entry-charge';
-import BDCFEntryFireTab from './bdcf-entry-fire';
-import BDCFEntryGroupTab from './bdcf-entry-group1';
+import BDCFEntryBogTab from 'sections/tabs/bdcf-entry-bog';
+import BDCFEntryDrillTab from 'sections/tabs/bdcf-entry-drill';
+import BDCFEntryChargeTab from 'sections/tabs/bdcf-entry-charge';
+import BDCFEntryFireTab from 'sections/tabs/bdcf-entry-fire';
+import BDCFEntryGroupTab from 'sections/tabs/bdcf-entry-group1';
+import BDCFEntryReportsTab from 'sections/tabs/bdcf-entry-reports';
 
 // help dialogs
 import BDCFBogHelp from 'components/help-dialog/bdcfBog';
 import BDCFChargeHelp from 'components/help-dialog/bdcfCharge';
 import BDCFDrillHelp from 'components/help-dialog/bdcfDrill';
 import BDCFFireHelp from 'components/help-dialog/bdcfFire';
+import BDCFReportGenerationHelp from 'components/help-dialog/bdcfReportGeneration';
 
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -70,6 +73,7 @@ export default function BDCFTabs() {
               <Tab label="Charge" icon={<PatternOutlinedIcon />} iconPosition="start" {...a11yProps(2)} />
               <Tab label="Fire" icon={<FlareOutlinedIcon />} iconPosition="start" {...a11yProps(3)} />
               <Tab label="Groups" icon={<AccountTreeOutlinedIcon />} iconPosition="start" {...a11yProps(4)} />
+              <Tab label="Reports" icon={<NoteAddIcon />} iconPosition="start" {...a11yProps(5)} />
             </Tabs>
 
             {/* Help Icon Positioned to the Right, Hidden for "Groups" Tab */}
@@ -97,6 +101,9 @@ export default function BDCFTabs() {
           <TabPanel value={value} index={4}>
             <BDCFEntryGroupTab />
           </TabPanel>
+          <TabPanel value={value} index={5}>
+            <BDCFEntryReportsTab />
+          </TabPanel>
         </Box>
       </MainCard>
 
@@ -105,6 +112,7 @@ export default function BDCFTabs() {
       {value === 1 && <BDCFDrillHelp open={openHelp} onClose={handleHelpClose} />}
       {value === 2 && <BDCFChargeHelp open={openHelp} onClose={handleHelpClose} />}
       {value === 3 && <BDCFFireHelp open={openHelp} onClose={handleHelpClose} />}
+      {value === 5 && <BDCFReportGenerationHelp open={openHelp} onClose={handleHelpClose} />}
     </>
   );
 }
