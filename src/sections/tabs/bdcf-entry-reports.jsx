@@ -3,6 +3,7 @@
 import { Box, Card, CardContent, Grid, Button, Typography } from '@mui/material';
 import BDCFGenerateReportsCard from 'sections/apps/report/prod-level-status/bdcf-generate-reports-card';
 import GeoFiredRingsWidget from 'sections/widget/GeoFiredRingsWidget';
+import DCFWidget from 'sections/widget/DCFWidget';
 
 function BDCFEntryReportsTab() {
   return (
@@ -11,10 +12,10 @@ function BDCFEntryReportsTab() {
         <BDCFGenerateReportsCard />
       </Grid>
       <Grid item xs={12} sm={8} md={6} lg={5}>
-        <GeoFiredRingsWidget />
+        <DCFWidget />
       </Grid>
       <Grid item xs={12} sm={8} md={6} lg={5}>
-        {/* <DrillChargeFiresWidget /> */}
+        <GeoFiredRingsWidget />
       </Grid>
     </Grid>
   );
