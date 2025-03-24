@@ -53,7 +53,7 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
         try {
           const [ringDetail, chargeResponse, detTypes] = await Promise.all([
             fetcher(`/prod-actual/bdcf/${location_id}`),
-            fetcher('/prod-actual/bdcf/conditions/Charged/')
+            fetcher('/prod-actual/bdcf/conditions/Bogging/')
           ]);
           setRingDetails(ringDetail.data);
           console.log(ringDetail.data);
