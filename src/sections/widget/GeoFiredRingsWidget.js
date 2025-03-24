@@ -61,7 +61,7 @@ function GeoFiredRingsWidget() {
     try {
       setLoading(true);
       const formattedDate = date.format('YYYY-MM-DD');
-      const response = await fetcherPost('/prod-actual/geo-fired/', {
+      const response = await fetcherPost('report/geo/fired-ring-grade/', {
         date: formattedDate
       });
       setFiredRings(response.data || []);
@@ -135,7 +135,7 @@ function GeoFiredRingsWidget() {
           pt: 2
         }}
       >
-        <Typography variant="h5">Fired Ring Grades</Typography>
+        <Typography variant="h5">Fired Ring Grade Report</Typography>
         {/* Title + Date Picker */}
         <Box sx={{ display: 'flex', alignItems: 'right', gap: 2 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -187,7 +187,7 @@ function GeoFiredRingsWidget() {
           <Typography sx={{ px: 2 }}>Loading...</Typography>
         ) : firedRings.length ? (
           <TableContainer sx={{ maxHeight: 440 }}>
-            <Table stickyHeader size="small" sx={{ width: '100%' }}>
+            <Table size="small" sx={{ width: '100%' }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Ring</TableCell>
