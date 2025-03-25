@@ -7,12 +7,12 @@ import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 
 // styles
-import pdfStyles from 'components/pdf/PdfReportStyles';
+import pdfStyles from 'components/pdf/PDFReportStyles';
 
 const LevelPage = ({ levelData, reportDate, author, pageIndex, totalPages }) => (
-  <Page size="A4" orientation="landscape" style={pdfStyles.page} wrap>
+  <Page size="A4" orientation="landscape" style={pdfStyles.landscapePage} wrap>
     <View>
-      <View style={pdfStyles.header}>
+      <View style={pdfStyles.landscapeHeader}>
         <Text style={pdfStyles.title}>Level {levelData.level}</Text>
         <Image style={pdfStyles.logo} src="/assets/images/branding/evn-logo-grey.png" />
       </View>
@@ -33,12 +33,13 @@ const LevelPage = ({ levelData, reportDate, author, pageIndex, totalPages }) => 
           </Text>
           <View style={[pdfStyles.cellWide, { flexDirection: 'row', flexWrap: 'wrap' }]}>
             {(od.bogging.conditions || []).map((condition, index) => (
-              <Text key={index} style={pdfStyles.chip}>
-                {condition}
-              </Text>
+              <View key={index} style={pdfStyles.chip}>
+                <Text>{condition}</Text>
+              </View>
             ))}
-            {od.bogging.comment ? <Text style={pdfStyles.commentText}>{od.bogging.comment}</Text> : null}
+            {od.bogging.comment && <Text style={pdfStyles.commentText}>{od.bogging.comment}</Text>}
           </View>
+
           <Text style={pdfStyles.cellNarrow}>
             {(() => {
               const drilled = od.drilled || {};
