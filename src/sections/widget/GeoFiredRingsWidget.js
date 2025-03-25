@@ -211,7 +211,7 @@ function GeoFiredRingsWidget() {
             </Table>
           </TableContainer>
         ) : (
-          <Typography sx={{ px: 2, pt: 2 }}>No fired rings found.</Typography>
+          <Typography sx={{ pt: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>No data</Typography>
         )}
       </CardContent>
     </Card>
