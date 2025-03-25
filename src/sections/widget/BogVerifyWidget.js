@@ -24,7 +24,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import TableChartIcon from '@mui/icons-material/TableChart';
 import PrintIcon from '@mui/icons-material/Print';
 import { pdf } from '@react-pdf/renderer';
-import { ReportPDF } from 'components/pdf/DCFPDF';
+import { ReportPDF } from 'components/pdf/BogVerifyPDF';
 
 import { LocalizationProvider, DesktopDatePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -37,7 +37,7 @@ import { useDebouncedCallback } from 'use-debounce';
 
 function BogVerifyWidget() {
   const [loading, setLoading] = useState(false);
-  const [DCFRings, setDCFRings] = useState([]);
+  const [bogTonnes, setBogTonnes] = useState([]);
   const [anchorEl, setAnchorEl] = useState(null);
 
   const yesterday = dayjs().subtract(1, 'day');
@@ -50,7 +50,7 @@ function BogVerifyWidget() {
     onSubmit: () => {}
   });
 
-  const fetchDCFdata = async (date, shift) => {
+  const fetchBogData = async (date, shift) => {
     try {
       setLoading(true);
       const formattedDate = date.format('YYYY-MM-DD');
@@ -58,7 +58,7 @@ function BogVerifyWidget() {
         date: formattedDate,
         shift
       });
-      setDCFRings(response.data || []);
+      setBogTonnes(response.data || []);
       if (response.data?.msg?.body) {
         enqueueSnackbar(response.data.msg.body, { variant: response.data.msg.type });
       }
@@ -69,12 +69,12 @@ function BogVerifyWidget() {
     }
   };
 
-  // Debounced fetch function (1s)
+  // Debounced fetch function (500ms)
   const debouncedFetch = useDebouncedCallback((date, shift) => {
     if (date && shift) {
-      fetchDCFdata(date, shift);
+      fetchBogData(date, shift);
     }
-  }, 1000);
+  }, 500);
 
   useEffect(() => {
     // Initial fetch if shift already set (if desired)
@@ -84,7 +84,7 @@ function BogVerifyWidget() {
   }, []);
 
   const handlePDFDownload = () => {
-    const blob = pdf(<ReportPDF data={DCFRings} date={formik.values.pickerDate} />).toBlob();
+    const blob = pdf(<ReportPDF data={bogTonnes} date={formik.values.pickerDate} shift={formik.values.shift} />).toBlob();
     blob.then((b) => {
       const url = URL.createObjectURL(b);
       const link = document.createElement('a');
@@ -95,7 +95,7 @@ function BogVerifyWidget() {
   };
 
   const handlePrint = async () => {
-    const blob = await pdf(<ReportPDF data={DCFRings} date={formik.values.pickerDate} />).toBlob();
+    const blob = await pdf(<ReportPDF data={bogTonnes} date={formik.values.pickerDate} shift={formik.values.shift} />).toBlob();
     const blobUrl = URL.createObjectURL(blob);
     const printWindow = window.open(blobUrl);
     if (printWindow) {
@@ -107,7 +107,7 @@ function BogVerifyWidget() {
   };
 
   const handleCSVDownload = () => {
-    const csv = [['Ring', 'Shift', 'Status'], ...DCFRings.map((r) => [r.alias, r.shift, r.activity])];
+    const csv = [['Ring', 'Shift', 'Quantity'], ...bogTonnes.map((r) => [r.alias, r.shift, r.quantity])];
     const csvContent = `data:text/csv;charset=utf-8,${csv.map((e) => e.join(',')).join('\n')}`;
     const link = document.createElement('a');
     link.setAttribute('href', encodeURI(csvContent));
@@ -118,9 +118,9 @@ function BogVerifyWidget() {
   };
 
   const downloadActions = [
-    { icon: <PrintIcon />, name: 'Print PDF', onClick: handlePrint },
-    { icon: <PictureAsPdfIcon />, name: 'Download PDF', onClick: handlePDFDownload },
-    { icon: <TableChartIcon />, name: 'Download CSV', onClick: handleCSVDownload }
+    { icon: <PrintIcon />, name: 'Print', onClick: handlePrint },
+    { icon: <PictureAsPdfIcon />, name: 'PDF', onClick: handlePDFDownload },
+    { icon: <TableChartIcon />, name: 'CSV', onClick: handleCSVDownload }
   ];
 
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
@@ -143,7 +143,7 @@ function BogVerifyWidget() {
                     action.onClick();
                     handleMenuClose();
                   }}
-                  disabled={DCFRings.length === 0}
+                  disabled={bogTonnes.length === 0}
                 >
                   {action.icon}
                   <Typography sx={{ ml: 1 }}>{action.name}</Typography>
@@ -190,7 +190,7 @@ function BogVerifyWidget() {
       <CardContent sx={{ px: 0, pt: 1, pb: 0 }}>
         {loading ? (
           <Typography sx={{ pt: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading...</Typography>
-        ) : DCFRings.length ? (
+        ) : bogTonnes.length ? (
           <TableContainer sx={{ maxHeight: 440 }}>
             <Table size="small" sx={{ width: '100%' }}>
               <TableHead>
@@ -200,7 +200,7 @@ function BogVerifyWidget() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {DCFRings.map((ring, idx) => (
+                {bogTonnes.map((ring, idx) => (
                   <TableRow key={idx}>
                     <TableCell>{ring.alias}</TableCell>
                     <TableCell>{ring.quantity}</TableCell>
