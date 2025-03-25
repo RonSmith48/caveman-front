@@ -109,9 +109,9 @@ function DCFWidget() {
   };
 
   const downloadActions = [
-    { icon: <PrintIcon />, name: 'Print PDF', onClick: handlePrint },
-    { icon: <PictureAsPdfIcon />, name: 'Download PDF', onClick: handlePDFDownload },
-    { icon: <TableChartIcon />, name: 'Download CSV', onClick: handleCSVDownload }
+    { icon: <PrintIcon />, name: 'Print', onClick: handlePrint },
+    { icon: <PictureAsPdfIcon />, name: 'PDF', onClick: handlePDFDownload },
+    { icon: <TableChartIcon />, name: 'CSV', onClick: handleCSVDownload }
   ];
 
   const handleMenuOpen = (event) => {
