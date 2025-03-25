@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import dayjs from 'dayjs';
 
 // styles
-import pdfStyles from 'components/pdf/PdfReportStyles';
+import pdfStyles from 'components/pdf/PDFReportStyles';
 
 const formatDate = (date) => date.format('DD/MM/YYYY');
 const formatDateTime = (date) => date.format('DD/MM/YYYY h:mm A');
