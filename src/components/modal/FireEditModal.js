@@ -81,7 +81,7 @@ const FireEditModal = ({ open, onClose, location_id, handleSelectLevel, level })
       };
 
       // Send DELETE request to API
-      await fetcher(`/prod-actual/bdcf/status-rollback/${location_id}/`);
+      await fetcher(`/prod-actual/bdcf/unfire/${location_id}/`);
 
       onClose(); // Close main dialog
     } catch (error) {
