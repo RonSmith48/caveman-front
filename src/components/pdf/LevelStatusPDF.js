@@ -21,7 +21,7 @@ const LevelPage = ({ levelData, reportDate, author, pageIndex, totalPages }) => 
         <Text style={pdfStyles.cell}>Bogging</Text>
         <Text style={pdfStyles.cellNarrow}>Avail Tonnes</Text>
         <Text style={pdfStyles.cellWide}>Bogging Comments</Text>
-        <Text style={pdfStyles.cellNarrow}>Drilled to</Text>
+        <Text style={pdfStyles.cellNarrow}>Last Drilled</Text>
         <Text style={pdfStyles.cell}>Charged Rings</Text>
       </View>
       {levelData.ore_drives.map((od) => (
@@ -89,8 +89,19 @@ const LevelPage = ({ levelData, reportDate, author, pageIndex, totalPages }) => 
             })()}
           </Text>
         </View>
+
+        
       ))}
+      <View style={[pdfStyles.totalsRow]}>
+        <Text style={pdfStyles.cell}>Totals</Text>
+        <Text style={pdfStyles.cell}></Text>
+        <Text style={pdfStyles.cellNarrow}></Text>
+        <Text style={pdfStyles.cellWide} />
+        <Text style={pdfStyles.cellNarrow}></Text>
+        <Text style={pdfStyles.cell}></Text>
+      </View>
     </View>
+    
     <View style={pdfStyles.footer} fixed>
       <Text>
         <Text>Report Date:</Text> <Text style={{ fontSize: 8 }}>{reportDate}</Text>
@@ -138,7 +149,7 @@ export const DownloadReportButton = ({ data, author, date, shift }) => {
 
   return (
     <Box sx={{ display: 'flex', gap: 1 }}>
-      <PDFDownloadLink document={<ReportPDF data={data} author={author} date={date} shift={shift} />} fileName="level-status.pdf">
+      <PDFDownloadLink document={<ReportPDF data={data} author={author} date={date} shift={shift} />} fileName="Level Status Report.pdf">
         {({ loading }) => (
           <IconButton title={loading ? 'Generating PDF...' : 'Download PDF'}>
             <PictureAsPdfIcon color="primary" sx={{ fontSize: 28 }} />

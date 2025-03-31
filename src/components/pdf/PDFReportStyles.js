@@ -74,7 +74,17 @@ const pdfStyles = StyleSheet.create({
     marginBottom: 4
   },
   title: { fontSize: 14, fontWeight: 'bold' },
-  titleContainer: { flexDirection: 'column' }
+  titleContainer: { flexDirection: 'column' },
+  totalsRow: {
+    flexDirection: 'row',
+    borderTopWidth: 0.8,
+    borderTopColor: '#999', // darker than #ccc but not black
+    borderTopStyle: 'solid',
+    marginTop: 4,
+    paddingTop: 2,
+    color: '#666', // medium gray text
+    fontSize: 10,
+  }
 });
 
 export default pdfStyles;
